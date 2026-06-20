@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ObesityIQ — Fase 04 | POS TECH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ── TOKENS (identical to Streamlit app C dict) ──────────── */
+:root {
+  --bg:        #0B1120;
+  --bg2:       #0D1426;
+  --surface:   #111827;
+  --surface2:  #1A2438;
+  --border:    #1F2D45;
+  --text:      #E2E8F0;
+  --text2:     #94A3B8;
+  --muted:     #64748B;
+  --primary:   #3B82F6;
+  --cyan:      #06B6D4;
+  --green:     #10B981;
+  --purple:    #A855F7;
+  --magenta:   #EC4899;
+  --orange:    #F97316;
+  --yellow:    #FBBF24;
+  --red:       #EF4444;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── NOISE TEXTURE overlay ───────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* ── NAV ─────────────────────────────────────────────────── */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(11,17,32,0.85);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 4rem;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 1rem;
+  background: linear-gradient(135deg, var(--cyan), var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+.nav-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── HERO ────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  padding: 6rem 4rem 5rem;
+  text-align: center;
+  z-index: 1;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(6,182,212,0.09) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 60% at 80% 50%, rgba(59,130,246,0.07) 0%, transparent 60%);
+  pointer-events: none;
+}
+.hero-eyebrow {
+  display: inline-block;
+  background: rgba(6,182,212,0.1);
+  border: 1px solid rgba(6,182,212,0.3);
+  color: var(--cyan);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 0.35rem 1.1rem;
+  border-radius: 999px;
+  margin-bottom: 1.5rem;
+}
+.hero h1 {
+  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--primary) 60%, #818CF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero h1 sup {
+  font-size: 0.3em;
+  font-weight: 600;
+  vertical-align: super;
+  -webkit-text-fill-color: var(--muted);
+  color: var(--muted);
+}
+.hero-tagline {
+  font-size: 1.1rem;
+  color: var(--text2);
+  max-width: 520px;
+  margin: 0 auto 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+.hero-author {
+  font-size: 0.8rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.hero-author strong { color: var(--text2); font-weight: 500; }
+
+/* ── STATS STRIP ─────────────────────────────────────────── */
+.stats-strip {
+  position: relative; z-index: 1;
+  max-width: 900px;
+  margin: 0 auto 5rem;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.stat-item {
+  background: var(--surface);
+  padding: 1.4rem 1.5rem;
+  text-align: center;
+  transition: background 0.2s;
+}
+.stat-item:hover { background: var(--surface2); }
+.stat-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+.stat-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── SECTION ─────────────────────────────────────────────── */
+section {
+  position: relative; z-index: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ── WHY BLOCK ───────────────────────────────────────────── */
+.why-block {
+  margin-bottom: 5rem;
+}
+.section-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, var(--border), transparent);
+}
+.why-block h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 1.5rem;
+  line-height: 1.25;
+}
+.why-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+.why-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem 1.6rem;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.why-card:hover {
+  border-color: rgba(6,182,212,0.4);
+  transform: translateY(-2px);
+}
+.why-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--glow, var(--cyan));
+  box-shadow: 0 0 14px 0px var(--glow, var(--cyan));
+}
+.why-card.c-cyan  { --glow: #06B6D4; }
+.why-card.c-blue  { --glow: #3B82F6; }
+.why-card.c-green { --glow: #10B981; }
+.why-card.c-purp  { --glow: #A855F7; }
+.why-stat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--glow, var(--cyan));
+  margin-bottom: 0.4rem;
+}
+.why-heading {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+.why-desc {
+  font-size: 0.83rem;
+  color: var(--text2);
+  line-height: 1.55;
+}
+
+/* ── NARRATIVE ───────────────────────────────────────────── */
+.narrative {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem 2.2rem;
+  margin-top: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.narrative::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: linear-gradient(to bottom, var(--cyan), var(--primary));
+}
+.narrative p {
+  font-size: 0.95rem;
+  color: var(--text2);
+  line-height: 1.8;
+}
+.narrative p + p { margin-top: 0.9rem; }
+.narrative strong { color: var(--text); font-weight: 600; }
+.narrative em { color: var(--cyan); font-style: normal; font-weight: 500; }
+
+/* ── CTA CARDS ───────────────────────────────────────────── */
+.cta-section {
+  position: relative; z-index: 1;
+  max-width: 900px;
+  margin: 0 auto 3.5rem;
+  padding: 0 2rem;
+}
+.cta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 18px 2px var(--glow); }
+  50%       { box-shadow: 0 0 36px 6px var(--glow); }
+}
+.cta-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 2.8rem 2.4rem;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+}
+.cta-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--glow, var(--cyan));
+  box-shadow: 0 0 22px 3px var(--glow, var(--cyan));
+}
+.cta-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 20% -5%, color-mix(in srgb, var(--glow) 8%, transparent) 0%, transparent 55%);
+  pointer-events: none;
+}
+.cta-card.c-streamlit { --glow: #06B6D4; }
+.cta-card.c-github    { --glow: #3B82F6; }
+.cta-card.c-streamlit:hover { border-color: rgba(6,182,212,0.55); transform: translateY(-6px); box-shadow: 0 24px 64px rgba(0,0,0,0.55); }
+.cta-card.c-github:hover    { border-color: rgba(59,130,246,0.55); transform: translateY(-6px); box-shadow: 0 24px 64px rgba(0,0,0,0.55); }
+.cta-card:hover::before { animation: glowPulse 1.8s ease-in-out infinite; }
+
+.cta-icon {
+  width: 60px; height: 60px;
+  border-radius: 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.25s;
+}
+.cta-icon svg { width: 32px; height: 32px; }
+.cta-card.c-streamlit:hover .cta-icon { border-color: rgba(6,182,212,0.4); }
+.cta-card.c-github:hover    .cta-icon { border-color: rgba(59,130,246,0.4); }
+
+.cta-type {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+.cta-card.c-streamlit .cta-type { color: var(--cyan); }
+.cta-card.c-github    .cta-type { color: #818CF8; }
+
+.cta-title {
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+.cta-desc {
+  font-size: 0.87rem;
+  color: var(--text2);
+  line-height: 1.65;
+  flex: 1;
+}
+.cta-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border: 1px solid;
+  transition: all 0.2s;
+  width: fit-content;
+}
+.cta-card.c-streamlit .cta-btn {
+  background: rgba(6,182,212,0.12);
+  color: var(--cyan);
+  border-color: rgba(6,182,212,0.35);
+}
+.cta-card.c-github .cta-btn {
+  background: rgba(59,130,246,0.12);
+  color: #93C5FD;
+  border-color: rgba(59,130,246,0.35);
+}
+.cta-card.c-streamlit:hover .cta-btn {
+  background: linear-gradient(135deg, #06B6D4, #0EA5E9);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(6,182,212,0.4);
+}
+.cta-card.c-github:hover .cta-btn {
+  background: linear-gradient(135deg, #3B82F6, #6366F1);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(59,130,246,0.4);
+}
+.cta-btn svg { width: 14px; height: 14px; }
+.cta-url {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0;
+  padding-left: 0.1rem;
+}
+
+/* ── DASHBOARD FOOTNOTE ──────────────────────────────────── */
+.footnote {
+  position: relative; z-index: 1;
+  text-align: center;
+  margin-bottom: 4rem;
+}
+.footnote a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.83rem;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.18s;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+.footnote a:hover { color: var(--text2); border-color: rgba(255,255,255,0.1); }
+.footnote a svg { width: 14px; height: 14px; }
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding: 1.6rem 4rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--muted);
+  position: relative; z-index: 1;
+  letter-spacing: 0.03em;
+}
+footer span { color: var(--text2); }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 700px) {
+  nav { padding: 0 1.5rem; }
+  .hero { padding: 4rem 1.5rem 3rem; }
+  .stats-strip { grid-template-columns: 1fr 1fr; }
+  section { padding: 0 1.5rem; }
+  .why-grid, .cta-grid { grid-template-columns: 1fr; }
+  footer { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ NAV -->
+<nav>
+  <div class="nav-brand">ObesityIQ</div>
+  <div class="nav-badge">POS TECH · Fase 04</div>
+</nav>
+
+<!-- ═══════ HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Tech Challenge · Data Analytics · FIAP</div>
+  <h1>ObesityIQ<sup>ML</sup></h1>
+  <p class="hero-tagline">Classificação de risco de obesidade com Machine Learning — 7 classes, em segundos.</p>
+  <p class="hero-author"><strong>Leonardo Fernandes Sbardelotto</strong> · RM 368591</p>
+</div>
+
+<!-- ═══════ CTA CARDS (topo) -->
+<div class="cta-section">
+  <div class="cta-grid">
+
+    <!-- Streamlit -->
+    <a href="https://app-obsesity-iq.streamlit.app/" target="_blank" rel="noopener" class="cta-card c-streamlit">
+      <div class="cta-icon">
+        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13 2L24 8.5V17.5L13 24L2 17.5V8.5L13 2Z" fill="rgba(6,182,212,0.12)" stroke="#06B6D4" stroke-width="1.4"/>
+          <path d="M6.5 12.5L13 8.5L19.5 12.5" stroke="#67E8F9" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="13" y1="18" x2="13" y2="8.5" stroke="#67E8F9" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="cta-type">App Interativo</div>
+        <div class="cta-title">Abrir no Streamlit</div>
+        <div class="cta-desc">Insira dados de um paciente e obtenha a classificação de risco em tempo real — sem instalação, direto no navegador.</div>
+      </div>
+      <div class="cta-footer">
+        <div class="cta-btn">
+          Acessar o app
+          <svg viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="cta-url">app-obsesity-iq.streamlit.app</div>
+      </div>
+    </a>
+
+    <!-- GitHub -->
+    <a href="https://github.com/Sbardelottoo/streamlit-obsesity" target="_blank" rel="noopener" class="cta-card c-github">
+      <div class="cta-icon">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd"
+            d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.167 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.153-1.11-1.46-1.11-1.46-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.268 2.75 1.026A9.578 9.578 0 0112 6.836a9.59 9.59 0 012.504.337c1.909-1.294 2.747-1.026 2.747-1.026.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.338 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.164 22 16.418 22 12c0-5.523-4.477-10-10-10z"
+            fill="#818CF8"/>
+        </svg>
+      </div>
+      <div>
+        <div class="cta-type">Código-Fonte</div>
+        <div class="cta-title">Repositório no GitHub</div>
+        <div class="cta-desc">Explore o pipeline de Machine Learning, o modelo XGBoost serializado, os helpers clínicos e todo o código do app Streamlit.</div>
+      </div>
+      <div class="cta-footer">
+        <div class="cta-btn">
+          Ver no GitHub
+          <svg viewBox="0 0 13 13" fill="none"><path d="M2 6.5h9M7.5 2.5l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="cta-url">github.com/Sbardelottoo/streamlit-obsesity</div>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<!-- ═══════ STATS STRIP -->
+<div class="stats-strip">
+  <div class="stat-item">
+    <div class="stat-num" style="color: var(--cyan);">98,1%</div>
+    <div class="stat-label">Acurácia XGBoost</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" style="color: var(--primary);">2.111</div>
+    <div class="stat-label">Pacientes analisados</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" style="color: var(--green);">7</div>
+    <div class="stat-label">Classes de risco</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num" style="color: var(--purple);">98,6%</div>
+    <div class="stat-label">Cross-val 5-fold</div>
+  </div>
+</div>
+
+<!-- ═══════ WHY SECTION -->
+<section>
+
+  <div class="why-block">
+    <div class="section-label">Por que isso existe</div>
+    <h2>Uma epidemia que cresce em silêncio — e uma ferramenta para combatê-la</h2>
+
+    <div class="why-grid">
+      <div class="why-card c-cyan">
+        <div class="why-stat">+1 bi</div>
+        <div class="why-heading">adultos vivem com obesidade no mundo</div>
+        <div class="why-desc">Segundo a OMS, é o triplo do registrado em 1990. No Brasil, mais de 1 em cada 5 adultos já ultrapassa o grau de obesidade.</div>
+      </div>
+      <div class="why-card c-blue">
+        <div class="why-stat">3×</div>
+        <div class="why-heading">mais risco de diabetes tipo 2 em obesos</div>
+        <div class="why-desc">Além da diabetes, a obesidade eleva significativamente o risco de doenças cardiovasculares, hipertensão e síndrome metabólica.</div>
+      </div>
+      <div class="why-card c-green">
+        <div class="why-stat">7 var.</div>
+        <div class="why-heading">comportamentais e físicas são suficientes</div>
+        <div class="why-desc">O modelo usa apenas hábitos alimentares, atividade física, histórico familiar e medidas básicas para classificar o risco com alta precisão.</div>
+      </div>
+      <div class="why-card c-purp">
+        <div class="why-stat">&lt; 1s</div>
+        <div class="why-heading">para uma triagem clínica completa</div>
+        <div class="why-desc">O ObesityIQ processa a predição em tempo real, sem necessidade de exames laboratoriais ou equipamentos especializados.</div>
+      </div>
+    </div>
+
+    <div class="narrative">
+      <p>
+        A obesidade raramente é diagnosticada cedo o suficiente. O caminho da triagem convencional — consulta, exames, encaminhamento — é lento e subestima casos limítrofes que ainda seriam reversíveis com intervenção simples. O <strong>ObesityIQ</strong> nasceu para preencher essa lacuna: um modelo de Machine Learning treinado em <em>2.111 registros reais</em> que, a partir de sete variáveis comportamentais e físicas, classifica com precisão o nível de risco em uma das sete categorias clínicas reconhecidas — de <em>Abaixo do Peso</em> a <em>Obesidade Grau III</em>.
+      </p>
+      <p>
+        A proposta não é substituir o médico, mas <strong>democratizar o acesso à triagem inicial</strong>: qualquer profissional de saúde, independente de infraestrutura laboratorial, consegue em segundos identificar quais pacientes precisam de atenção prioritária. O modelo foi validado com <em>98,1% de acurácia</em> em teste e <em>98,6% em cross-validation estratificada de 5 folds</em>, demonstrando robustez mesmo em populações diversas.
+      </p>
+    </div>
+  </div>
+
+
+</section>
+
+<!-- ═══════ DASHBOARD FOOTNOTE -->
+<div class="footnote">
+  <a href="streamlit-obsesity/dashboard_obesidade.html">
+    <svg viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.3"/></svg>
+    Ver o Dashboard Analítico completo
+  </a>
+</div>
+
+<!-- ═══════ FOOTER -->
+<footer>
+  POS TECH · Data Analytics · FIAP &nbsp;·&nbsp; Tech Challenge Fase 04 &nbsp;·&nbsp;
+  <span>Leonardo Fernandes Sbardelotto</span> · RM 368591
+</footer>
+
+</body>
+</html>

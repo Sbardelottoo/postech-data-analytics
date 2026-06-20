@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise de Vinhos e Derivados — Tech Challenge Fase 1</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg:       #0D1117;
+      --surface:  #161B22;
+      --surface2: #21262D;
+      --border:   #30363D;
+      --text:     #E6EDF3;
+      --text2:    #8B949E;
+      --accent:   #58A6FF;
+      --green:    #3FB950;
+      --amber:    #D29922;
+      --red:      #F85149;
+      --purple:   #BC8CFF;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      position: sticky; top: 0; z-index: 200;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .h-left { display: flex; flex-direction: column; gap: 2px; }
+    .h-title { font-size: 16px; font-weight: 600; }
+    .h-meta  { font-size: 11px; color: var(--text2); }
+    .h-badge {
+      font-size: 11px; padding: 4px 10px; border-radius: 20px;
+      border: 1px solid var(--border); color: var(--text2);
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex; gap: 0; overflow-x: auto;
+    }
+    nav a {
+      color: var(--text2); text-decoration: none;
+      padding: 11px 14px; font-size: 12px; white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: color .15s, border-color .15s;
+    }
+    nav a:hover { color: var(--text); }
+    nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── MAIN ── */
+    main { max-width: 1360px; margin: 0 auto; padding: 28px 32px 48px; }
+
+    /* ── KPI CARDS ── */
+    .kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 36px; }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 18px 20px;
+    }
+    .kpi-label  { font-size: 10px; text-transform: uppercase; letter-spacing: .9px; color: var(--text2); margin-bottom: 6px; }
+    .kpi-val    { font-size: 26px; font-weight: 700; line-height: 1.1; }
+    .kpi-sub    { font-size: 11px; color: var(--text2); margin-top: 4px; }
+    .c-accent { color: var(--accent); }
+    .c-amber  { color: var(--amber); }
+    .c-red    { color: var(--red);   }
+    .c-green  { color: var(--green); }
+
+    /* ── SECTIONS ── */
+    .section { margin-bottom: 44px; }
+    .sec-head { border-left: 3px solid var(--accent); padding-left: 12px; margin-bottom: 20px; }
+    .sec-title { font-size: 17px; font-weight: 600; }
+    .sec-sub   { font-size: 12px; color: var(--text2); margin-top: 3px; }
+
+    /* ── CHART CARD ── */
+    .chart-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 18px 20px;
+    }
+    .chart-title   { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .chart-insight { font-size: 11px; color: var(--text2); margin-bottom: 12px; line-height: 1.4; }
+
+    /* ── INSIGHT BELOW CHART ── */
+    .chart-note {
+      border-top: 1px solid var(--border);
+      margin-top: 14px; padding-top: 12px;
+      font-size: 12px; color: var(--text2); line-height: 1.7;
+    }
+    .chart-note strong { color: var(--text); }
+    .chart-note .note-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .chart-note .npill {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px;
+      padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border);
+    }
+    .np-red    { color: var(--red);    border-color: var(--red)   !important; }
+    .np-green  { color: var(--green);  border-color: var(--green) !important; }
+    .np-blue   { color: var(--accent); border-color: var(--accent)!important; }
+    .np-amber  { color: var(--amber);  border-color: var(--amber) !important; }
+    .np-purple { color: var(--purple); border-color: var(--purple)!important; }
+
+    /* ── CONTEXT BOX (resumo) ── */
+    .ctx-box {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 18px 20px; margin-bottom: 20px;
+    }
+    .ctx-title { font-size: 11px; font-weight: 700; text-transform: uppercase;
+                 letter-spacing: .8px; color: var(--text2); margin-bottom: 10px; }
+    .ctx-dims  { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .ctx-dim   {
+      font-size: 11px; font-weight: 600; padding: 5px 12px;
+      border-radius: 20px; border: 1px solid var(--border); color: var(--text);
+      background: var(--surface);
+    }
+    .ctx-body  { font-size: 12px; color: var(--text2); line-height: 1.7; }
+    .ctx-body strong { color: var(--text); }
+
+    /* ── GRIDS ── */
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .g21 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .mb14 { margin-bottom: 14px; }
+
+    /* ── INSIGHT BOX ── */
+    .ibox {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-left: 3px solid var(--accent); border-radius: 6px;
+      padding: 14px 16px; margin-bottom: 20px;
+    }
+    .ibox p { font-size: 12px; color: var(--text2); line-height: 1.65; }
+    .ibox strong { color: var(--text); }
+
+    /* ── LEGEND PILLS ── */
+    .legend-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 8px; }
+    .leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+    .leg-dot  { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── STRATEGY CARDS ── */
+    .strat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
+    .strat {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 18px;
+    }
+    .strat.defend { border-top: 3px solid var(--amber); }
+    .strat.grow   { border-top: 3px solid var(--green); }
+    .strat.explore{ border-top: 3px solid var(--purple); }
+    .strat-badge  { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
+    .bd-defend { color: var(--amber);  }
+    .bd-grow   { color: var(--green);  }
+    .bd-explore{ color: var(--purple); }
+    .strat-title{ font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+    .strat-body { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+    /* ── FUTURE CARD ── */
+    .future-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .fcard {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 6px; padding: 14px;
+    }
+    .fcard strong { display: block; font-size: 12px; color: var(--text); margin-bottom: 6px; }
+    .fcard p { font-size: 11px; color: var(--text2); line-height: 1.55; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--surface); border-top: 1px solid var(--border);
+      padding: 20px 32px; margin-top: 48px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 8px;
+    }
+    .foot-text { font-size: 11px; color: var(--text2); }
+
+    @media (max-width: 900px) {
+      .kpi-row  { grid-template-columns: repeat(2,1fr); }
+      .g2, .g21 { grid-template-columns: 1fr; }
+      .strat-grid  { grid-template-columns: 1fr; }
+      .future-grid { grid-template-columns: 1fr; }
+      main { padding: 16px; }
+      header, nav { padding-left: 16px; padding-right: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════ HEADER -->
+<header>
+  <div class="h-left">
+    <div class="h-title">Vinhos &amp; Derivados Brasileiros — Diagnóstico 360°</div>
+    <div class="h-meta">Tech Challenge Fase 1 · Leonardo Fernandes Sbardelotto · RM 368591 · POS TECH Data Analytics</div>
+  </div>
+  <div class="h-badge">2009 – 2023 · Embrapa / MDIC / OIV</div>
+</header>
+
+<!-- ════════════════════════════════════════════ NAV -->
+<nav>
+  <a href="#resumo"         class="active">Resumo</a>
+  <a href="#exportacoes">Exportações</a>
+  <a href="#importacoes">Importações</a>
+  <a href="#comercializacao">Comercialização</a>
+  <a href="#producao">Produção</a>
+  <a href="#conclusoes">Conclusões</a>
+</nav>
+
+<!-- ════════════════════════════════════════════ MAIN -->
+<main>
+
+  <!-- ── RESUMO EXECUTIVO ── -->
+  <div id="resumo" class="section">
+    <div class="sec-head">
+      <div class="sec-title">Resumo Executivo</div>
+      <div class="sec-sub">Quatro dimensões · 15 anos · Janela 2009–2023 escolhida por consistência de série e captura de ciclos-chave</div>
+    </div>
+
+    <div class="ctx-box">
+      <div class="ctx-title">O que você precisa saber antes de ler este relatório</div>
+      <div class="ctx-dims">
+        <span class="ctx-dim">📤 Exportações — quem nos compra</span>
+        <span class="ctx-dim">📥 Importações — quem nos fornece</span>
+        <span class="ctx-dim">🏪 Comercialização — como vendemos aqui dentro</span>
+        <span class="ctx-dim">🏭 Produção — como produzimos</span>
+      </div>
+      <div class="ctx-body">
+        <strong>Por que 2009–2023?</strong> Antes de 2009 há muitos zeros e países descontinuados nas séries, distorcendo conclusões. A janela de 15 anos captura os ciclos-chave sem diluir a análise: pré/pós-pandemia, choque de fretes, guerra na Ucrânia e o salto estrutural dos sucos. A série é padronizada com <strong>1 kg ≈ 1 L</strong>, conforme documentação Embrapa/MDIC.<br><br>
+        <strong>Como interpretar os dados:</strong> O foco está nos <strong>10 maiores países</strong> em cada dimensão — eles concentram >93% do volume e condensam praticamente toda a dinâmica de preço e volatilidade. A cauda longa (127 compradores, 58 fornecedores) é estrategicamente relevante para diversificação e nichos, mas não altera o diagnóstico central. Todos os gráficos são <strong>interativos</strong>: passe o mouse para ver valores exatos, clique na legenda para mostrar/ocultar séries.
+      </div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-label">Total Exportado</div>
+        <div class="kpi-val c-accent">US$ 98,8 Mi</div>
+        <div class="kpi-sub">78 Mi litros · 137 destinos</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Preço Médio Exportação</div>
+        <div class="kpi-val c-amber">US$ 1,27 /L</div>
+        <div class="kpi-sub">Premium UK/NL/EUA: US$ 3,14/L — 2,5×</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Concentração Top-2</div>
+        <div class="kpi-val c-red">81,5%</div>
+        <div class="kpi-sub">Rússia + Paraguai · risco de dependência</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Comercialização Doméstica</div>
+        <div class="kpi-val c-green">6,15 Bi L</div>
+        <div class="kpi-sub">Suco integral acelerou +100% pós-2019</div>
+      </div>
+    </div>
+
+    <div class="ibox">
+      <p>
+        <strong>Diagnóstico central:</strong> O setor exportador brasileiro é altamente concentrado em dois mercados de baixo US$/L (Rússia e Paraguai),
+        comprimindo margens e elevando risco geopolítico. Existe um <strong>nicho premium inexplorado</strong> — UK, Países Baixos e EUA pagam US$ 3,14/L
+        com apenas 6,9% do volume, enquanto a faixa mid-price (China, Japão, Espanha) oferece espaço de mix.
+        No mercado interno, o suco natural integral exibe mudança estrutural de consumo desde 2019; vinhos de mesa e tinto dominam escala,
+        e espumantes voltam a crescer no pós-pandemia. <strong>Proximidade + logística explicam volume; renda + maturidade explicam valor por litro.</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ EXPORTAÇÕES -->
+  <div id="exportacoes" class="section">
+    <div class="sec-head">
+      <div class="sec-title">1. Exportações — Compradores do Vinho Brasileiro</div>
+      <div class="sec-sub">93,8% do volume concentrado nos 10 maiores destinos · 127 países formam cauda longa estratégica (6,2%)</div>
+    </div>
+
+    <!-- 1.1 Timeline anual -->
+    <div class="chart-card mb14">
+      <div class="chart-title">Volume Anual Exportado — Pico 2009 distorce a tendência; dinâmica real: crescimento moderado 2016→2022</div>
+      <div class="chart-insight">2009: operações atípicas com Rússia · 2014–16: câmbio depreciado + fretes altos · 2021–22: recuperação logística e arbitragem de preço</div>
+      <div id="chart-annual" style="height:270px;"></div>
+      <div class="chart-note">
+        A tendência linear aparece levemente descendente porque 2009 distorce a reta. Olhando o miolo <strong>2016–2023</strong>, o movimento é estável a moderadamente ascendente. Três vetores explicam a série: <strong>(i) 2009</strong> — operações atípicas e desalinhamentos de estoque com a Rússia inflam o volume de forma não recorrente; <strong>(ii) 2014–2016</strong> — câmbio depreciado e fretes/custos mais altos comprimem o volume exportado; <strong>(iii) 2021–2022</strong> — recuperação logística pós-pandemia, melhor mix e arbitragem de preço favoreceram compras, seguidos de normalização em 2023. Excluindo 2009, a série mostra resiliência — não colapso.
+      </div>
+    </div>
+
+    <!-- 1.2 Map + Bar -->
+    <div class="g2 mb14">
+      <div class="chart-card">
+        <div class="chart-title">Mapa de Destinos — Bolhas proporcionais ao volume (2009–2023)</div>
+        <div class="chart-insight">Concentração hemisférica evidente: Rússia e Paraguai sozinhos representam 81,5% do volume total exportado</div>
+        <div id="chart-map" style="height:310px;"></div>
+        <div class="chart-note">
+          Os destinos compartilham um padrão: <strong>mercados urbanos em regiões onde o clima não sustenta oferta local</strong> ou onde existe canal de redistribuição forte. Três vetores explicam quem compra: <strong>Climático</strong> — regiões frias/temperadas com baixa oferta local dependem de importação; <strong>Demográfico/econômico</strong> — países com alta renda absorvem melhor o mix de valor; <strong>Social/comportamental</strong> — onde o hábito é consolidado e há selos/avaliações, o preço por litro se sustenta em patamares mais altos. A cauda longa de 127 países representa 6,2% do volume, mas mantém relevância tática para diversificação e redução de risco.
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Top 10 Compradores — Coloridos por segmento de preço</div>
+        <div class="chart-insight">Vermelho = baixo preço (&lt;US$1,5/L) · Verde = mid · Azul = premium (&gt;US$2,5/L)</div>
+        <div id="chart-buyers-bar" style="height:310px;"></div>
+        <div class="legend-row">
+          <div class="leg-item"><div class="leg-dot" style="background:#F85149;"></div>Baixo preço (&lt;US$1,5/L)</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#D29922;"></div>Mid-price (US$1,5–2,5/L)</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#58A6FF;"></div>Premium (&gt;US$2,5/L)</div>
+        </div>
+        <div class="chart-note">
+          <div class="note-pills">
+            <span class="npill np-red">Escala · baixo preço</span>
+            <span class="npill np-amber">Mid-price · ajuste de mix</span>
+            <span class="npill np-blue">Premium · capturar valor</span>
+          </div>
+          <strong>Rússia &amp; Paraguai (escala):</strong> dependem do "preço-logística" fechar a conta — consumo cresce mais por acesso a canais do que por marca. O risco é duplo: margem comprimida (US$0,71–1,39/L) e dependência geopolítica/logística. <strong>EUA, Reino Unido, Países Baixos (premium):</strong> renda alta e canais especializados favorecem premiumização — a decisão de compra é mediada por reputação, selos e posicionamento, não por preço. <strong>China, Japão, Espanha, Uruguai, Haiti (mid-price):</strong> combinam janelas econômicas com preferências locais, exigem adaptação de portfólio (estilo/embalagem) e cadência logística — ciclo de venda mais longo, mas com espaço real de ganho de mix.
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.3 Scatter Volume x Preço -->
+    <div class="chart-card mb14">
+      <div class="chart-title">Quadrante Volume × Preço — Onde defender escala e onde capturar valor</div>
+      <div class="chart-insight">
+        Rússia e Paraguai: alto volume, baixo preço (US$0,71–1,39/L) — margens comprimidas · Reino Unido, Países Baixos, EUA: 6,9% do volume, 17% do valor — 2,5× o preço médio
+      </div>
+      <div id="chart-scatter-exp" style="height:340px;"></div>
+      <div class="chart-note">
+        <strong>Concentração extrema:</strong> Rússia + Paraguai concentram <strong>81,5% do volume</strong> e 66,8% do valor exportado. O preço médio combinado desses dois é US$ 1,04/L — 18% abaixo do preço médio geral (US$ 1,27/L). Cada choque geopolítico, cambial ou logístico nesses dois mercados impacta imediatamente o resultado total do setor. <strong>Nicho premium rentável:</strong> UK + Países Baixos + EUA somam 17% do valor com apenas 6,9% do volume, a US$ 3,14/L — 2,5× o preço médio. Esses mercados exigem consistência de portfólio, plano de marca e relacionamento com buyers, mas a alavanca de margem por litro é direta e transformadora. <strong>Faixa mid-price</strong> (China, Espanha, Japão, Uruguai, Haiti — US$ 1,3–2,3/L): espaço para ganho de mix com customização de embalagem e captura de janelas cambiais.
+      </div>
+    </div>
+
+    <!-- 1.4 Série temporal top 4 países -->
+    <div class="chart-card">
+      <div class="chart-title">Evolução por País — Rússia sai depois de 2013; Paraguai consolida liderança a partir de 2017</div>
+      <div class="chart-insight">Haiti cresce de zero para 670k L em 2021 — potencial canal alternativo de escala · Uruguai acelera pós-2021</div>
+      <div id="chart-country-trend" style="height:310px;"></div>
+      <div class="chart-note">
+        A variação por destino responde a dois vetores combinados: <strong>choques macro</strong> (câmbio, frete, pandemia) e <strong>capacidade do canal</strong> de converter oportunidade em pedido recorrente. Quando frete cai e o BRL/USD favorece, vizinhos e hubs logísticos aceleram porque transformam rapidamente o ganho de preço em escala — é o que explica a dominância do Paraguai de 2017 a 2022. Quando o custo sobe, o volume migra para mercados com maior elasticidade ou se acomoda nos maduros, que reagem mais a posicionamento e storytelling do que à mera disponibilidade. O <strong>Haiti</strong>, saindo de zero para 670k L em 2021, é o candidato mais claro a canal alternativo de escala — vale monitorar com prioridade. O <strong>Uruguai</strong>, acelerando pós-2021 para 637k L em 2022, sinaliza outra janela de diversificação no Cone Sul.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ IMPORTAÇÕES -->
+  <div id="importacoes" class="section">
+    <div class="sec-head">
+      <div class="sec-title">2. Importações — Fornecedores do Brasil</div>
+      <div class="sec-sub">~1,51 bilhão de litros importados (1970–2023) · 68 origens · Top-10 = 99,5% do volume</div>
+    </div>
+
+    <div class="g2">
+      <div class="chart-card">
+        <div class="chart-title">Top 10 Fornecedores — Cone Sul domina volume; Europa ancora valor por garrafa</div>
+        <div class="chart-insight">Chile lidera com 45%; Argentina + Portugal completam 77% · Cone Sul = escala, Europa = prestígio e margem</div>
+        <div id="chart-suppliers-bar" style="height:330px;"></div>
+        <div class="legend-row">
+          <div class="leg-item"><div class="leg-dot" style="background:#3FB950;"></div>Base (&lt;US$3,1/L)</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#D29922;"></div>Mid (US$3,1–4/L)</div>
+          <div class="leg-item"><div class="leg-dot" style="background:#58A6FF;"></div>Premium (&gt;US$4/L)</div>
+        </div>
+        <div class="chart-note">
+          O mix do Brasil é liderado por origens com <strong>escala, previsibilidade de safra e logística estável</strong>. Três camadas operam por lógicas distintas: <strong>Chile &amp; Argentina (acesso)</strong> — sustentam a base de volume por proximidade e escala agrícola, funcionando como porta de entrada do consumidor com preço competitivo; <strong>Portugal, Itália, Espanha (meio)</strong> — menor participação em litros, mas elevam ticket pela identidade e tradição (efeito reputação); <strong>França &amp; EUA (premium)</strong> — baixa escala, alto preço por litro, ativam ocasiões de prestígio (presentes, cartas de vinho, celebrações) e ancoram margem e imagem. <strong>Em suma:</strong> o Cone Sul garante cobertura e competitividade; a Europa ancora valor e imagem; e a cauda longa captura janelas de custo e estilo.
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Volume × Preço Fornecedores — França e EUA: menor escala, maior retorno</div>
+        <div class="chart-insight">França: US$5,52/L · EUA: US$4,92/L vs. Uruguai: US$2,60/L e Chile: US$2,79/L</div>
+        <div id="chart-scatter-imp" style="height:330px;"></div>
+        <div class="chart-note">
+          No mapa Volume × Preço, a posição de cada origem resulta de <strong>custos</strong> (câmbio/frete), <strong>oferta</strong> (clima/escala) e <strong>maturidade do canal</strong>. Vizinhos ganham quando abrem janelas de custo; maduros sustentam preço por reputação e avaliação; intermediários entram para ajuste de mix. <strong>Chile</strong> entrega volume a preço competitivo (US$ 2,79/L) — blindar com contratos de longo prazo. <strong>Argentina</strong> é mais sensível aos ciclos cambiais — monitorar janelas de taxa de câmbio. <strong>Portugal</strong> sustenta patamar de preço e marca (US$ 3,07/L) com identidade forte. <strong>França</strong> (US$ 5,52/L) e <strong>EUA</strong> (US$ 4,92/L) são ativações de ocasião — ampliar share de margem com curadoria e storytelling para presentes e cartas de vinho.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ COMERCIALIZAÇÃO -->
+  <div id="comercializacao" class="section">
+    <div class="sec-head">
+      <div class="sec-title">3. Comercialização Doméstica</div>
+      <div class="sec-sub">6,15 bilhões de litros (2009–2023) · Vinho Mesa + Tinto = 57% · Sucos crescem estruturalmente</div>
+    </div>
+
+    <div class="g2">
+      <div class="chart-card">
+        <div class="chart-title">Mix de Mercado — Vinhos de acesso dominam volume; espumantes/finos sustentam imagem</div>
+        <div class="chart-insight">Vinhos de acesso (Mesa+Tinto+Branco) ≈ 62% · Sucos (todas variações) ≈ 25% · Finos+Espumantes ≈ 8%</div>
+        <div id="chart-com-mix" style="height:330px;"></div>
+        <div class="chart-note">
+          A cesta doméstica é altamente concentrada: seis famílias somam ~99,5% do volume. <strong>Vinhos de acesso</strong> (Mesa + Tinto + Branco ≈ 62%) lideram por preço, escala produtiva com uvas americanas/híbridas e capilaridade no varejo alimentar — o tinto vira padrão do consumo tranquilo com oferta ampla e promoções. <strong>Não alcoólicos</strong> (Sucos ≈ 25,6%) ganham espaço pelo apelo saúde/sem álcool e pela logística de longa-vida (Tetra Pak/PET) que sustenta compras familiares e institucionais; o concentrado adiciona demanda B2B estável na indústria. <strong>Valor e celebração</strong> (Espumantes + Vinho Fino ≈ 7,9%): alto valor por litro e consumo ligado a ocasiões especiais — crescem em imagem, mas com menor recorrência e enfrentando competição de importados.
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Tendência Top-5 — Suco integral inflexiona estruturalmente em 2019</div>
+        <div class="chart-insight">Vinhos de mesa: pico pandêmico 2020–21 e normalização · Suco de Uvas: crescimento gradual e contínuo</div>
+        <div id="chart-com-trend" style="height:330px;"></div>
+        <div class="chart-note">
+          A inflexão do <strong>suco natural integral a partir de 2019</strong> é a mudança estrutural mais relevante da série: após anos em zero, o volume dispara e se mantém elevado. O motor combina (i) expansão do atacarejo e do canal institucional (merenda escolar), (ii) preferência crescente por produtos "100% integral"/menos açúcar e (iii) ganho de escala logística com envase asséptico que barateou o litro — no RS, as vendas de suco de uva mais do que dobraram entre 2008 e 2018. <strong>Mesa e Tinto</strong> espelham o ciclo macro: queda 2012–2018 com renda comprimida e câmbio/frete altos, pico em 2020 com pandemia e e-commerce, normalização 2022–2023 com inflação, juros elevados e retorno do on-trade. <strong>Espumantes</strong> recuam em 2020 (menos eventos) e reagem forte em 2021–2023 com a volta das celebrações. <strong>Branco</strong> perde peso sistematicamente — migração para tintos competitivos e substituição por sucos no consumo diário.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ PRODUÇÃO -->
+  <div id="producao" class="section">
+    <div class="sec-head">
+      <div class="sec-title">4. Produção Nacional</div>
+      <div class="sec-sub">Top-5 respondem por ~77% · "Trifeta": escala doméstica + base industrial B2B + avanço dos sucos</div>
+    </div>
+
+    <div class="chart-card mb14">
+      <div class="chart-title">Volume por Categoria — Vinho Mesa e Tinto lideram; Derivados e Mosto sustentam B2B industrial</div>
+      <div class="chart-insight">Choque de safra em 2016 impactou sincronicamente todas as categorias; recomposição em 2017; pico pandêmico 2020–21 em vinhos tranquilos</div>
+      <div id="chart-prod-bar" style="height:290px;"></div>
+      <div class="chart-note">
+        A produção é concentrada em escala e preço: os 5 líderes — Vinho de Mesa (24,1%), Tinto (20,5%), Derivados (12,8%), Mosto Simples (11,7%) e Suco (8,7%) — somam ~78% do volume. <strong>Vinho de Mesa e Tinto</strong> dominam por alto rendimento agrícola com uvas americanas/híbridas, custo por litro baixo e capilaridade no varejo — atendem consumo cotidiano com oferta nacional ampla. <strong>Derivados e Mosto Simples</strong> são o pilar industrial B2B: abastecem bebidas e alimentos com fluxo estável e previsível, gerando receita recorrente independente do consumidor final. <strong>Sucos de uva</strong> crescem com o apelo "sem álcool/saúde" e logística longa-vida; o Integral ganhou patamar pós-2018, enquanto o Concentrado atende principalmente uso industrial. <strong>Vinho Fino</strong> (vinífera, ~5%) tem maior valor por litro, mas menor rendimento e competição com importados — é motor de imagem, não de volume. O ranking reflete a "trifeta" brasileira: (i) escala doméstica de vinhos de acesso, (ii) base industrial de mostos/derivados e (iii) avanço dos sucos por saúde e conveniência.
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-title">Linha do Tempo Produção — Choque 2016 e recuperação 2017 visíveis em todas as curvas</div>
+      <div class="chart-insight">Três forças explicam o período: (i) safra 2016↓/2017↑ (ii) greve caminhoneiros 2018 (iii) canal/tributação pandemia 2020–21</div>
+      <div id="chart-prod-trend" style="height:310px;"></div>
+      <div class="chart-note">
+        O período é explicado por três forças que reordenam o curto prazo, enquanto a estrutura do mix sustenta o longo prazo: <strong>(i) Safra</strong> — em 2016 há queda generalizada e sincrônica em praticamente todos os itens (Mesa, Tinto, Branco, Suco, Mosto) por clima adverso na Serra Gaúcha; em 2017 a recuperação é imediata com safra recorde e recomposição rápida de estoques. <strong>(ii) Logística</strong> — em 2018 a greve dos caminhoneiros criou custos e atrasos pontuais, gerando oscilações entre categorias sem reverter a tendência. <strong>(iii) Canal/tributação</strong> — em 2020–2021 a pandemia migrou consumo para dentro de casa (e-commerce, supermercados) impulsionando vinhos tranquilos; a retirada do ICMS-ST para vinhos em SP naquele ano facilitou a comercialização no maior mercado do país. Em 2022–2023 o reequilíbrio com reabertura do on-trade e inflação/juros altos devolve parte do ganho excepcional — mas sucos e derivados mantêm patamar superior ao pré-2016, confirmando a mudança estrutural.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════ CONCLUSÕES -->
+  <div id="conclusoes" class="section">
+    <div class="sec-head">
+      <div class="sec-title">5. Conclusões e Recomendações Estratégicas</div>
+      <div class="sec-sub">Risco, margem e previsibilidade — direções práticas para exportações e portfólio interno</div>
+    </div>
+
+    <div class="ibox">
+      <p>
+        <strong>Concentração é o principal risco:</strong> Rússia + Paraguai = 81,5% do volume a US$1,04/L médio — 18% abaixo da média.
+        Qualquer choque geopolítico, cambial ou logístico nesses dois mercados impacta imediatamente o resultado total.
+        <strong>Diversificar para mercados premium é urgente, não opcional.</strong>
+        Do lado das oportunidades, o nicho UK/NL/EUA remunera 2,5× mais por litro com baixo volume atual — alavanca direta de margem.
+        Internamente, o suco de uva integral mudou de patamar desde 2019 e deve permanecer estável nos próximos 2–3 anos.
+      </p>
+    </div>
+
+    <div class="strat-grid">
+      <div class="strat defend">
+        <div class="strat-badge bd-defend">Defender Escala</div>
+        <div class="strat-title">Rússia &amp; Paraguai</div>
+        <div class="strat-body">
+          Blindar com contratos de longo prazo e cobertura cambial. Pressão de margem: US$0,71–1,39/L exige alto giro para gerar retorno.
+          Atenção ao risco geopolítico russo — desenvolver Haiti como canal alternativo de escala (cresceu de zero para 670k L em 2021).
+        </div>
+      </div>
+      <div class="strat grow">
+        <div class="strat-badge bd-grow">Capturar Valor</div>
+        <div class="strat-title">UK · Países Baixos · EUA</div>
+        <div class="strat-body">
+          Mercados maduros pagam US$3,14/L médio — 2,5× o preço geral. Premiumização via selos/avaliações (Wine Spectator, Decanter),
+          plano de marca e feiras especializadas. ROI de longo prazo mas transformador de margem por litro.
+        </div>
+      </div>
+      <div class="strat explore">
+        <div class="strat-badge bd-explore">Ajustar Mix</div>
+        <div class="strat-title">China · Japão · Espanha · Uruguai</div>
+        <div class="strat-body">
+          Faixa mid-price US$1,30–2,32/L com espaço de ganho. Customizar embalagem e portfólio (espumantes para ocasiões, orgânicos
+          para nicho saúde). Capturar janelas cambiais. Ciclo de venda mais longo — exige presença comercial contínua.
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:20px;">
+      <div class="chart-title" style="margin-bottom:16px;">Análises Futuras Recomendadas</div>
+      <div class="future-grid">
+        <div class="fcard">
+          <strong>Câmbio &amp; Frete</strong>
+          <p>Integrar séries BRL/USD e BRL/EUR + índices de frete (Baltic Dry) para modelar janelas de competitividade por destino e prever ciclos de compra.</p>
+        </div>
+        <div class="fcard">
+          <strong>Clima &amp; Safra</strong>
+          <p>Anomalias pluviométricas na Serra Gaúcha e rendimento por hectare — previsão de oferta e risco de choque como ocorreu em 2016 (queda sincônica em todas as categorias).</p>
+        </div>
+        <div class="fcard">
+          <strong>Reputação &amp; Canal</strong>
+          <p>OIV rankings, avaliações Vivino/Wine Spectator e participação e-commerce/atacarejo por destino — conectar US$/L à disposição a pagar e ao canal de distribuição.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="foot-text">
+    <strong>Fontes:</strong> Embrapa VitiBrasil (vitibrasil.cnpuv.embrapa.br) · OIV World Wine Report 2024 ·
+    MDIC ComexStat · World Bank GDP API · Banco Central (PTAX) · IBGE SIDRA · INMET Normais Climatológicas
+  </div>
+  <div class="foot-text">POS TECH Data Analytics · Tech Challenge Fase 1 · Leonardo Fernandes Sbardelotto · RM 368591</div>
+</footer>
+
+<!-- ════════════════════════════════════════════ SCRIPTS -->
+<script>
+'use strict';
+
+// ── helpers ──────────────────────────────────────────────────
+const BG      = '#0D1117';
+const SURFACE = '#161B22';
+const GRID    = '#21262D';
+const BORDER  = '#30363D';
+const TEXT    = '#E6EDF3';
+const TEXT2   = '#8B949E';
+
+function base(extra) {
+  return Object.assign({
+    paper_bgcolor: BG,
+    plot_bgcolor:  SURFACE,
+    font: { color: TEXT, family: '-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', size: 11 },
+    xaxis: { gridcolor: GRID, zerolinecolor: BORDER, linecolor: BORDER },
+    yaxis: { gridcolor: GRID, zerolinecolor: BORDER, linecolor: BORDER },
+    margin: { t: 12, r: 20, b: 44, l: 64 }
+  }, extra || {});
+}
+
+const CFG = { responsive: true, displayModeBar: false };
+
+// ── colour palettes ───────────────────────────────────────────
+const SEG_EXPORT = {   // by price/L of export buyer
+  'Rússia':         '#F85149',
+  'Paraguai':       '#F85149',
+  'Haiti':          '#F85149',
+  'EUA':            '#58A6FF',
+  'Reino Unido':    '#58A6FF',
+  'Países Baixos':  '#58A6FF',
+  'China':          '#D29922',
+  'Espanha':        '#D29922',
+  'Japão':          '#D29922',
+  'Uruguai':        '#D29922'
+};
+
+const SEG_IMPORT = {
+  'Chile':          '#3FB950',
+  'Argentina':      '#3FB950',
+  'Portugal':       '#3FB950',
+  'Itália':         '#D29922',
+  'Espanha':        '#D29922',
+  'Uruguai':        '#3FB950',
+  'África do Sul':  '#D29922',
+  'Austrália':      '#D29922',
+  'EUA':            '#58A6FF',
+  'França':         '#58A6FF'
+};
+
+const COUNTRY_COLORS = {
+  'Rússia':'#F85149','Paraguai':'#3FB950','EUA':'#58A6FF',
+  'China':'#D29922','Haiti':'#BC8CFF','Espanha':'#FF7B72',
+  'Reino Unido':'#79C0FF','Uruguai':'#56D364','Japão':'#FFA657',
+  'Países Baixos':'#F0883E'
+};
+
+// ── 1. VOLUME ANUAL ──────────────────────────────────────────
+(function(){
+  const years = [2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023];
+  const vol   = [26.0, 1.1, 1.0, 5.4, 8.9, 1.6, 0.95,1.6, 2.7, 3.6, 3.0, 4.2, 7.8, 6.7, 5.0];
+  const cols  = vol.map(v => v >= 7 ? '#58A6FF' : v >= 3 ? '#3FB950' : '#30363D');
+
+  Plotly.newPlot('chart-annual', [
+    {
+      x: years, y: vol, type: 'bar',
+      marker: { color: cols, line: { color: BG, width: 1 } },
+      text: vol.map(v => v < 1 ? (v*1000).toFixed(0)+'k' : v.toFixed(1)+'Mi'),
+      textposition: 'outside', textfont: { size: 9 },
+      hovertemplate: '<b>%{x}</b>: %{y:.2f} Mi L<extra></extra>'
+    }
+  ], base({
+    height: 260,
+    showlegend: false,
+    margin: { t: 28, r: 20, b: 40, l: 54 },
+    xaxis: { tickfont: { size: 10 } },
+    yaxis: { title: { text: 'Mi Litros', font: { size: 10, color: TEXT2 } } },
+    shapes: [
+      { type:'line', x0:2009.4, x1:2009.4, y0:0, y1:26.5, line:{ color:'#30363D', width:1, dash:'dot' } },
+      { type:'line', x0:2013.4, x1:2013.4, y0:0, y1:9.5,  line:{ color:'#30363D', width:1, dash:'dot' } },
+      { type:'line', x0:2021.4, x1:2021.4, y0:0, y1:8.5,  line:{ color:'#30363D', width:1, dash:'dot' } }
+    ],
+    annotations: [
+      { x:2009, y:27.2, text:'Pico Rússia<br>operações atípicas',
+        showarrow:true, arrowhead:2, ax:45, ay:-10,
+        font:{ size:9, color:TEXT2 }, arrowcolor:TEXT2, bgcolor:SURFACE, borderpad:3 },
+      { x:2013, y:10.1, text:'Rússia retorna<br>+Espanha pontual',
+        showarrow:true, arrowhead:2, ax:-55, ay:-10,
+        font:{ size:9, color:TEXT2 }, arrowcolor:TEXT2, bgcolor:SURFACE, borderpad:3 },
+      { x:2021, y:9.0, text:'Pós-pandemia<br>Paraguai pico',
+        showarrow:true, arrowhead:2, ax:50, ay:-10,
+        font:{ size:9, color:TEXT2 }, arrowcolor:TEXT2, bgcolor:SURFACE, borderpad:3 }
+    ]
+  }), CFG);
+})();
+
+// ── 2. MAPA DE DESTINOS ──────────────────────────────────────
+(function(){
+  const names   = ['Rússia','Paraguai','EUA','China','Haiti','Espanha','Reino Unido','Uruguai','Japão','Países Baixos'];
+  const lats    = [61.52,  -23.44,  37.09, 35.86, 18.97, 40.46, 55.38, -32.52, 36.20, 52.13];
+  const lons    = [105.32, -58.44, -95.71,104.20,-72.29,  -3.75, -3.44, -55.77,138.25,  5.29];
+  const volumes = [32822141,30803247,3349299,2574686,2351228,1990238,1150780,1118688,972341,897986];
+  const prices  = [0.71,1.39,2.78,1.90,1.36,1.91,4.03,1.50,2.32,3.36];
+
+  // size: log-based so Rússia and Paraguai are big but not overwhelming
+  const logMin = Math.log(Math.min(...volumes));
+  const logMax = Math.log(Math.max(...volumes));
+  const sizes  = volumes.map(v => 8 + 36 * (Math.log(v) - logMin) / (logMax - logMin));
+  const colors = names.map(n => COUNTRY_COLORS[n]);
+
+  Plotly.newPlot('chart-map', [{
+    type: 'scattergeo',
+    lat: lats, lon: lons,
+    mode: 'markers+text',
+    marker: { size: sizes, color: colors, opacity: 0.85, line: { color: BG, width: 1.5 } },
+    text: names,
+    textposition: ['top center','top center','top center','top center',
+                   'bottom center','top center','top center','bottom center',
+                   'top center','top center'],
+    textfont: { size: 9, color: TEXT },
+    customdata: volumes.map((v,i) => ({ vol: v, price: prices[i] })),
+    hovertemplate: '<b>%{text}</b><br>Volume: %{customdata.vol:,.0f} L<br>Preço: US$ %{customdata.price:.2f}/L<extra></extra>'
+  }], {
+    paper_bgcolor: BG,
+    height: 300,
+    font: { color: TEXT, size: 10 },
+    showlegend: false,
+    margin: { t: 0, r: 0, b: 0, l: 0 },
+    geo: {
+      bgcolor:         BG,
+      landcolor:       '#1C2128',
+      oceancolor:      '#0D1117',
+      lakecolor:       '#0D1117',
+      showland:        true,
+      showocean:       true,
+      showlakes:       true,
+      showcountries:   true,
+      countrycolor:    BORDER,
+      coastlinecolor:  BORDER,
+      showframe:       false,
+      projection:      { type: 'natural earth' }
+    }
+  }, CFG);
+})();
+
+// ── 3. BAR TOP 10 COMPRADORES ────────────────────────────────
+(function(){
+  const data = [
+    { n:'Países Baixos', v:897986,   p:3.36 },
+    { n:'Japão',         v:972341,   p:2.32 },
+    { n:'Uruguai',       v:1118688,  p:1.50 },
+    { n:'Reino Unido',   v:1150780,  p:4.03 },
+    { n:'Espanha',       v:1990238,  p:1.91 },
+    { n:'Haiti',         v:2351228,  p:1.36 },
+    { n:'China',         v:2574686,  p:1.90 },
+    { n:'EUA',           v:3349299,  p:2.78 },
+    { n:'Paraguai',      v:30803247, p:1.39 },
+    { n:'Rússia',        v:32822141, p:0.71 }
+  ];
+  const colors = data.map(d =>
+    d.p >= 2.5 ? '#58A6FF' : d.p >= 1.5 ? '#D29922' : '#F85149'
+  );
+
+  Plotly.newPlot('chart-buyers-bar', [{
+    y: data.map(d => d.n),
+    x: data.map(d => d.v),
+    type: 'bar', orientation: 'h',
+    marker: { color: colors, line: { color: BG, width: 1 } },
+    text: data.map(d => d.v >= 1e6 ? (d.v/1e6).toFixed(1)+'Mi' : (d.v/1000).toFixed(0)+'k'),
+    textposition: 'outside', textfont: { size: 9 },
+    customdata: data.map(d => d.p),
+    hovertemplate: '<b>%{y}</b><br>Volume: %{x:,.0f} L<br>Preço: US$ %{customdata:.2f}/L<extra></extra>'
+  }], base({
+    height: 300,
+    showlegend: false,
+    margin: { t: 10, r: 70, b: 44, l: 90 },
+    xaxis: { title:{ text:'Volume (L)', font:{ size:10, color:TEXT2 } } },
+    yaxis: { tickfont:{ size: 10 } }
+  }), CFG);
+})();
+
+// ── 4. SCATTER VOLUME × PREÇO (EXPORTAÇÕES) ─────────────────
+(function(){
+  const rows = [
+    { n:'Rússia',        v:32822141, p:0.71,  val:23151716  },
+    { n:'Paraguai',      v:30803247, p:1.39,  val:42862206  },
+    { n:'EUA',           v:3349299,  p:2.78,  val:9309051   },
+    { n:'China',         v:2574686,  p:1.90,  val:4903695   },
+    { n:'Haiti',         v:2351228,  p:1.36,  val:3198849   },
+    { n:'Espanha',       v:1990238,  p:1.91,  val:3805889   },
+    { n:'Reino Unido',   v:1150780,  p:4.03,  val:4640935   },
+    { n:'Uruguai',       v:1118688,  p:1.50,  val:1674149   },
+    { n:'Japão',         v:972341,   p:2.32,  val:2257163   },
+    { n:'Países Baixos', v:897986,   p:3.36,  val:3012934   }
+  ];
+
+  const valMax = Math.max(...rows.map(r => r.val));
+  const sizes  = rows.map(r => 10 + 40 * (r.val / valMax));
+  const colors = rows.map(r => COUNTRY_COLORS[r.n]);
+  const tpos   = rows.map(r =>
+    r.v > 5e6 ? 'top right' : r.p > 3.5 ? 'top center' : 'middle right'
+  );
+
+  Plotly.newPlot('chart-scatter-exp', [
+    // reference lines
+    { x:[1.27,1.27], y:[0,35e6], mode:'lines',
+      line:{ color:BORDER, width:1, dash:'dash' }, hoverinfo:'none', showlegend:false },
+    { x:[0.5,4.5], y:[3e6,3e6], mode:'lines',
+      line:{ color:BORDER, width:1, dash:'dash' }, hoverinfo:'none', showlegend:false },
+    // main scatter
+    {
+      x: rows.map(r => r.p),
+      y: rows.map(r => r.v),
+      mode: 'markers+text',
+      text: rows.map(r => r.n),
+      textposition: tpos,
+      textfont: { size: 10 },
+      marker: { size: sizes, color: colors, opacity: 0.88, line: { color: BG, width: 1.5 } },
+      customdata: rows.map(r => r.val),
+      hovertemplate: '<b>%{text}</b><br>Preço: US$ %{x:.2f}/L<br>Volume: %{y:,.0f} L<br>Receita: US$ %{customdata:,.0f}<extra></extra>'
+    }
+  ], base({
+    height: 330,
+    showlegend: false,
+    margin: { t: 12, r: 20, b: 52, l: 80 },
+    xaxis: {
+      title: { text: 'Preço (US$/L)', font:{ size:11, color:TEXT2 } },
+      range: [0.4, 4.5]
+    },
+    yaxis: {
+      title: { text: 'Volume Exportado (L)', font:{ size:11, color:TEXT2 } }
+    },
+    annotations: [
+      { x:0.85,  y:33.5e6, text:'<b>Alto volume · Baixo preço</b><br>Defender escala', showarrow:false,
+        font:{ size:9, color:'#F85149' }, bgcolor:SURFACE, bordercolor:BORDER, borderpad:4 },
+      { x:3.9,   y:700000, text:'<b>Baixo vol · Alto preço</b><br>Capturar valor',     showarrow:false,
+        font:{ size:9, color:'#58A6FF' }, bgcolor:SURFACE, bordercolor:BORDER, borderpad:4 },
+      { x:0.85,  y:500000, text:'Preço médio: US$1,27/L →', showarrow:false,
+        font:{ size:8, color:TEXT2 }, xanchor:'left' }
+    ]
+  }), CFG);
+})();
+
+// ── 5. SÉRIE TEMPORAL POR PAÍS ───────────────────────────────
+(function(){
+  const years = [2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023];
+
+  const series = {
+    'Rússia':  [21912914,0,0,4528176,5893291,190656,47664,0,0,0,0,1463,181931,66046,0],
+    'Paraguai':[486927,510989,240168,354824,481564,521847,495428,985739,2393468,3234168,2419537,3299013,6522527,5076670,3780378],
+    'EUA':     [372319,228968,306787,146585,245368,222267,195896,258072,132688,169109,209765,300178,111085,220373,229839],
+    'Haiti':   [4500,2700,0,0,0,0,0,0,0,79500,81873,399128,670379,553503,559645],
+    'Uruguai': [0,914,1238,1135,1526,0,0,0,0,7711,6180,0,136774,637117,326093]
+  };
+
+  const colors = { 'Rússia':'#F85149','Paraguai':'#3FB950','EUA':'#58A6FF','Haiti':'#BC8CFF','Uruguai':'#56D364' };
+
+  const traces = Object.entries(series).map(([name, vals]) => ({
+    x: years, y: vals.map(v => v/1e6),
+    name, mode: 'lines+markers',
+    line:   { color: colors[name], width: 2 },
+    marker: { color: colors[name], size: 4 },
+    hovertemplate: '<b>'+name+'</b> %{x}: %{y:.3f} Mi L<extra></extra>'
+  }));
+
+  Plotly.newPlot('chart-country-trend', traces, base({
+    height: 300,
+    showlegend: true,
+    legend: { x:0.01, y:0.99, bgcolor:'rgba(22,27,34,0.9)', bordercolor:BORDER, borderwidth:1, font:{ size:9 } },
+    margin: { t:12, r:20, b:44, l:60 },
+    xaxis: { tickfont:{ size:10 } },
+    yaxis: { title:{ text:'Mi Litros', font:{ size:10, color:TEXT2 } } },
+    annotations: [
+      { x:2021, y:6.6, text:'Paraguai pico', showarrow:true, arrowhead:2, ax:-40, ay:-15,
+        font:{ size:9, color:'#3FB950' }, arrowcolor:'#3FB950' },
+      { x:2021, y:0.7, text:'Haiti cresce', showarrow:true, arrowhead:2, ax:30, ay:15,
+        font:{ size:9, color:'#BC8CFF' }, arrowcolor:'#BC8CFF' }
+    ]
+  }), CFG);
+})();
+
+// ── 6. BAR TOP 10 FORNECEDORES ───────────────────────────────
+(function(){
+  const data = [
+    { n:'Austrália',      v:5765459,   p:3.73 },
+    { n:'EUA',            v:7803862,   p:4.92 },
+    { n:'África do Sul',  v:11314410,  p:3.45 },
+    { n:'Uruguai',        v:35574576,  p:2.60 },
+    { n:'França',         v:63600166,  p:5.52 },
+    { n:'Espanha',        v:67463620,  p:3.34 },
+    { n:'Itália',         v:147303132, p:3.20 },
+    { n:'Portugal',       v:223799606, p:3.07 },
+    { n:'Argentina',      v:264857594, p:3.32 },
+    { n:'Chile',          v:678841769, p:2.79 }
+  ];
+  const colors = data.map(d =>
+    d.p >= 4.0 ? '#58A6FF' : d.p >= 3.1 ? '#D29922' : '#3FB950'
+  );
+
+  Plotly.newPlot('chart-suppliers-bar', [{
+    y: data.map(d => d.n),
+    x: data.map(d => d.v),
+    type: 'bar', orientation: 'h',
+    marker: { color: colors, line: { color: BG, width: 1 } },
+    text: data.map(d => d.v >= 1e8 ? (d.v/1e9).toFixed(2)+'Bi' : (d.v/1e6).toFixed(0)+'Mi'),
+    textposition: 'outside', textfont: { size: 9 },
+    customdata: data.map(d => d.p),
+    hovertemplate: '<b>%{y}</b><br>Volume: %{x:,.0f} L<br>Preço: US$ %{customdata:.2f}/L<extra></extra>'
+  }], base({
+    height: 320,
+    showlegend: false,
+    margin: { t:10, r:65, b:44, l:95 },
+    xaxis: { title:{ text:'Volume (L)', font:{ size:10, color:TEXT2 } } },
+    yaxis: { tickfont:{ size:10 } }
+  }), CFG);
+})();
+
+// ── 7. SCATTER VOLUME × PREÇO (IMPORTAÇÕES) ─────────────────
+(function(){
+  const rows = [
+    { n:'Chile',          v:678841769, p:2.79, val:1896578161 },
+    { n:'Argentina',      v:264857594, p:3.32, val:878091858  },
+    { n:'Portugal',       v:223799606, p:3.07, val:687771968  },
+    { n:'Itália',         v:147303132, p:3.20, val:470897178  },
+    { n:'Espanha',        v:67463620,  p:3.34, val:224992759  },
+    { n:'França',         v:63600166,  p:5.52, val:351302135  },
+    { n:'Uruguai',        v:35574576,  p:2.60, val:92548759   },
+    { n:'África do Sul',  v:11314410,  p:3.45, val:39040431   },
+    { n:'EUA',            v:7803862,   p:4.92, val:38386931   },
+    { n:'Austrália',      v:5765459,   p:3.73, val:21478497   }
+  ];
+
+  // log-based size on value (revenue)
+  const logMin = Math.log(Math.min(...rows.map(r => r.val)));
+  const logMax = Math.log(Math.max(...rows.map(r => r.val)));
+  const sizes  = rows.map(r => 8 + 34 * (Math.log(r.val) - logMin) / (logMax - logMin));
+
+  const palImp = { 'Chile':'#3FB950','Argentina':'#56D364','Portugal':'#79C0FF','Itália':'#FF7B72',
+                   'Espanha':'#D29922','França':'#58A6FF','Uruguai':'#3FB950',
+                   'África do Sul':'#D29922','EUA':'#BC8CFF','Austrália':'#FFA657' };
+
+  const tpos = rows.map(r =>
+    r.v > 200e6 ? 'top right' : r.p > 5 ? 'top center' : 'middle right'
+  );
+
+  Plotly.newPlot('chart-scatter-imp', [{
+    x: rows.map(r => r.p),
+    y: rows.map(r => r.v),
+    mode: 'markers+text',
+    text: rows.map(r => r.n),
+    textposition: tpos,
+    textfont: { size: 9 },
+    marker: {
+      size: sizes,
+      color: rows.map(r => palImp[r.n]),
+      opacity: 0.88,
+      line: { color: BG, width: 1.5 }
+    },
+    customdata: rows.map(r => r.val),
+    hovertemplate: '<b>%{text}</b><br>Preço: US$ %{x:.2f}/L<br>Volume: %{y:,.0f} L<br>Valor total: US$ %{customdata:,.0f}<extra></extra>'
+  }], base({
+    height: 320,
+    showlegend: false,
+    margin: { t:12, r:20, b:52, l:80 },
+    xaxis: { title:{ text:'Preço (US$/L)', font:{ size:11, color:TEXT2 } } },
+    yaxis: { title:{ text:'Volume Importado (L)', font:{ size:11, color:TEXT2 } } }
+  }), CFG);
+})();
+
+// ── 8. COMERCIALIZAÇÃO — MIX (DONUT) ─────────────────────────
+(function(){
+  const labels = ['Vinho de Mesa','Tinto','Suco de Uvas','Suco Integral',
+                  'Suco Concentrado','Branco','Vinho Fino','Espumantes','Outros'];
+  const values = [3031232024,2850701406,1547015869,606070377,
+                  472372673,469701487,322916556,292420204,454393836];
+  const colors = ['#58A6FF','#79C0FF','#3FB950','#56D364',
+                  '#1F6FEB','#BC8CFF','#FF7B72','#FFA657','#8B949E'];
+
+  Plotly.newPlot('chart-com-mix', [{
+    labels, values, type: 'pie', hole: 0.44,
+    marker: { colors, line: { color: BG, width: 2 } },
+    textinfo: 'label+percent',
+    textfont: { size: 10 },
+    insidetextorientation: 'radial',
+    hovertemplate: '<b>%{label}</b><br>%{value:,.0f} L<br>%{percent}<extra></extra>'
+  }], {
+    paper_bgcolor: BG,
+    height: 320,
+    showlegend: false,
+    margin: { t:10, r:10, b:20, l:10 },
+    font: { color: TEXT, size: 10 },
+    annotations: [{
+      x:0.5, y:0.5,
+      text: '6,15<br>Bi L',
+      showarrow: false,
+      font: { size: 13, color: TEXT }
+    }]
+  }, CFG);
+})();
+
+// ── 9. COMERCIALIZAÇÃO — TENDÊNCIA ───────────────────────────
+(function(){
+  const years = [2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023];
+
+  const series = [
+    { name:'Vinho de Mesa',       color:'#58A6FF',
+      y:[234.5,221.2,230.3,207.0,221.6,206.4,209.2,166.8,176.1,177.2,180.4,215.6,210.0,187.9,187.0] },
+    { name:'Tinto',               color:'#79C0FF',
+      y:[212.6,203.8,211.4,189.4,207.2,193.6,197.6,161.9,166.3,166.3,170.0,207.8,205.0,180.3,177.5] },
+    { name:'Suco de Uvas',        color:'#3FB950',
+      y:[29.1,35.2,45.2,53.8,76.0,88.0,115.3,92.3,107.2,140.5,147.9,144.9,147.8,157.1,166.7] },
+    { name:'Suco Natural Integral',color:'#56D364',
+      y:[0,0,0,0,0,0,0,0,0,0,131.6,114.5,115.2,115.4,129.4] },
+    { name:'Suco Concentrado',    color:'#1F6FEB',
+      y:[31.9,30.8,34.9,33.5,38.4,39.4,34.9,28.9,26.8,23.6,28.7,22.4,26.7,33.6,37.9] }
+  ];
+
+  const traces = series.map(s => ({
+    x: years, y: s.y, name: s.name, mode: 'lines',
+    line: { color: s.color, width: 2 },
+    hovertemplate: '<b>'+s.name+'</b> %{x}: %{y:.1f} Mi L<extra></extra>'
+  }));
+
+  Plotly.newPlot('chart-com-trend', traces, base({
+    height: 320,
+    showlegend: true,
+    legend: { x:0.01, y:0.99, bgcolor:'rgba(22,27,34,.9)', bordercolor:BORDER, borderwidth:1, font:{ size:9 } },
+    margin: { t:12, r:20, b:44, l:60 },
+    xaxis: { tickfont:{ size:10 } },
+    yaxis: { title:{ text:'Mi Litros', font:{ size:10, color:TEXT2 } } },
+    annotations: [
+      { x:2019, y:135, text:'Integral inflexiona', showarrow:true, arrowhead:2, ax:35, ay:10,
+        font:{ size:9, color:'#56D364' }, arrowcolor:'#56D364' },
+      { x:2020, y:218, text:'Pandemia', showarrow:true, arrowhead:2, ax:30, ay:-15,
+        font:{ size:9, color:TEXT2 }, arrowcolor:TEXT2 }
+    ]
+  }), CFG);
+})();
+
+// ── 10. PRODUÇÃO — BAR ───────────────────────────────────────
+(function(){
+  const produtos = ['Vinho\nde Mesa','Tinto','Derivados','Mosto\nSimples',
+                    'Suco','Branco','Suco\nIntegral','Vinho\nFino','Suco\nConc.','Rosado'];
+  const vols     = [2841923901,2421737505,1504774677,1380108518,
+                    1024463379,932614507,588274403,587604482,431011445,75176372];
+  const colors   = ['#58A6FF','#79C0FF','#D29922','#FFA657',
+                    '#3FB950','#BC8CFF','#56D364','#FF7B72','#1F6FEB','#F0883E'];
+
+  Plotly.newPlot('chart-prod-bar', [{
+    x: produtos,
+    y: vols.map(v => v/1e9),
+    type: 'bar',
+    marker: { color: colors, line: { color: BG, width: 1 } },
+    text: vols.map(v => (v/1e9).toFixed(2)+' Bi'),
+    textposition: 'outside', textfont: { size: 9 },
+    hovertemplate: '<b>%{x}</b><br>%{y:.2f} Bi L<extra></extra>'
+  }], base({
+    height: 280,
+    showlegend: false,
+    margin: { t:20, r:20, b:70, l:60 },
+    xaxis: { tickangle:-15, tickfont:{ size:9 } },
+    yaxis: { title:{ text:'Bi Litros', font:{ size:10, color:TEXT2 } } }
+  }), CFG);
+})();
+
+// ── 11. PRODUÇÃO — TENDÊNCIA ─────────────────────────────────
+(function(){
+  const years = [2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023];
+
+  const series = [
+    { name:'Vinho de Mesa', color:'#58A6FF',
+      y:[205.4,195.3,257.8,212.8,196.9,196.2,210.3,86.3,255.0,218.4,144.6,124.2,173.9,195.0,169.8] },
+    { name:'Tinto',         color:'#79C0FF',
+      y:[182.4,168.7,234.2,199.9,186.3,175.0,186.6,84.1,22.8,207.4,138.4,119.4,166.5,187.3,162.9] },
+    { name:'Derivados',     color:'#D29922',
+      y:[56.8,51.2,85.7,100.8,64.1,62.9,107.3,54.0,109.1,95.2,142.9,92.5,169.0,138.5,174.7] },
+    { name:'Mosto Simples', color:'#FFA657',
+      y:[53.4,45.9,77.3,93.3,58.5,57.6,100.9,49.8,101.0,88.9,135.6,80.4,153.6,126.0,157.8] },
+    { name:'Suco',          color:'#3FB950',
+      y:[39.7,50.1,69.4,70.1,64.9,76.7,87.9,42.2,77.2,65.5,77.8,69.3,100.9,65.8,67.0] }
+  ];
+
+  const traces = series.map(s => ({
+    x: years, y: s.y, name: s.name, mode:'lines',
+    line: { color: s.color, width: 2 },
+    hovertemplate: '<b>'+s.name+'</b> %{x}: %{y:.1f} Mi L<extra></extra>'
+  }));
+
+  Plotly.newPlot('chart-prod-trend', traces, base({
+    height: 300,
+    showlegend: true,
+    legend: { x:0.01, y:0.99, bgcolor:'rgba(22,27,34,.9)', bordercolor:BORDER, borderwidth:1, font:{ size:9 } },
+    margin: { t:12, r:20, b:44, l:60 },
+    xaxis: { tickfont:{ size:10 } },
+    yaxis: { title:{ text:'Mi Litros', font:{ size:10, color:TEXT2 } } },
+    annotations: [
+      { x:2016, y:95, text:'Choque safra 2016', showarrow:true, arrowhead:2, ax:45, ay:-15,
+        font:{ size:9, color:TEXT2 }, arrowcolor:TEXT2 },
+      { x:2017, y:260, text:'Recomposição 2017', showarrow:true, arrowhead:2, ax:40, ay:10,
+        font:{ size:9, color:TEXT2 }, arrowcolor:TEXT2 },
+      { x:2021, y:173, text:'Pandemia', showarrow:true, arrowhead:2, ax:-40, ay:-15,
+        font:{ size:9, color:TEXT2 }, arrowcolor:TEXT2 }
+    ]
+  }), CFG);
+})();
+
+// ── NAV ACTIVE STATE ─────────────────────────────────────────
+(function(){
+  const links = [...document.querySelectorAll('nav a')];
+  const sections = links.map(a => document.querySelector(a.getAttribute('href')));
+
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY + 90;
+    let active = 0;
+    sections.forEach((s, i) => { if (s && s.offsetTop <= y) active = i; });
+    links.forEach((a, i) => a.classList.toggle('active', i === active));
+  }, { passive: true });
+
+  links.forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelector(a.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+})();
+</script>
+</body>
+</html>

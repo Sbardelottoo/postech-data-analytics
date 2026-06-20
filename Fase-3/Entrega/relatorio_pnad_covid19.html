@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório PNAD-COVID-19 | Tech Challenge Fase 03</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8; --bg-alt: #ede8dc; --ink: #1a1612; --ink-soft: #3d3630;
+    --ink-muted: #7a6f65; --accent: #b5451b; --accent-light: #d4633a;
+    --accent-pale: #f0d8cc; --rule: #c8bfb0; --green: #2d6a4f;
+    --green-pale: #d0e8dd; --blue: #1b4a7a; --blue-pale: #d0e0f0;
+    --gold: #8a6914; --gold-pale: #f5e8c0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: 'Source Serif 4', Georgia, serif; font-size: 16px; line-height: 1.75; max-width: 900px; margin: 0 auto; padding: 60px 40px 100px; }
+
+  /* COVER */
+  .cover { text-align: center; padding: 60px 0 80px; border-bottom: 2px solid var(--ink); margin-bottom: 70px; }
+  .cover::before { content: ''; display: block; width: 60px; height: 3px; background: var(--accent); margin: 0 auto 32px; }
+  .cover-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 20px; }
+  .cover h1 { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; line-height: 1.15; margin-bottom: 16px; }
+  .cover h1 em { font-style: italic; color: var(--accent); }
+  .cover-sub { font-size: 15px; color: var(--ink-muted); font-style: italic; margin-bottom: 36px; }
+  .cover-meta { display: inline-flex; gap: 32px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-soft); border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 12px 24px; flex-wrap: wrap; justify-content: center; }
+  .cover-meta span { font-weight: 600; }
+
+  /* SUMÁRIO */
+  .toc { background: var(--bg-alt); border: 1px solid var(--rule); border-left: 4px solid var(--accent); padding: 32px 36px; margin-bottom: 70px; }
+  .toc-title { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 24px; }
+  .toc-list { list-style: none; }
+  .toc-list li { display: flex; align-items: baseline; margin-bottom: 10px; font-size: 14px; }
+  .toc-list li a { color: var(--ink-soft); text-decoration: none; font-style: italic; }
+  .toc-list li a:hover { color: var(--accent); }
+  .toc-num { font-family: 'Playfair Display', serif; font-size: 13px; font-weight: 700; color: var(--accent); width: 32px; flex-shrink: 0; }
+  .toc-dots { flex: 1; border-bottom: 1px dotted var(--rule); margin: 0 8px; position: relative; top: -3px; }
+  .toc-appendix .toc-num { color: var(--ink-muted); font-style: italic; }
+  .toc-group { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-muted); margin: 18px 0 6px 0; padding-left: 32px; }
+
+  /* SECTIONS */
+  section { margin-bottom: 64px; scroll-margin-top: 20px; }
+  .section-number { font-family: 'Playfair Display', serif; font-size: 72px; font-weight: 700; color: var(--accent-pale); line-height: 1; margin-bottom: -16px; margin-left: -4px; }
+  h2 { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--ink); margin-bottom: 6px; padding-bottom: 10px; border-bottom: 1.5px solid var(--rule); }
+  h3 { font-family: 'Playfair Display', serif; font-size: 18px; font-style: italic; font-weight: 400; color: var(--accent); margin: 32px 0 10px; }
+  p { margin-bottom: 14px; color: var(--ink-soft); }
+  p strong { color: var(--ink); font-weight: 600; }
+  code { background: var(--bg-alt); padding: 1px 5px; font-size: 13px; border-radius: 2px; }
+
+  /* CALLOUTS */
+  .callout { border-left: 3px solid var(--accent); background: var(--accent-pale); padding: 14px 20px; margin: 20px 0; border-radius: 0 4px 4px 0; font-size: 15px; font-style: italic; color: var(--ink-soft); }
+  .callout-blue  { border-left-color: var(--blue);  background: var(--blue-pale); }
+  .callout-green { border-left-color: var(--green); background: var(--green-pale); }
+  .callout-gold  { border-left-color: var(--gold);  background: var(--gold-pale); }
+
+  /* TABLES */
+  .data-table { width: 100%; border-collapse: collapse; margin: 20px 0 28px; font-size: 14px; }
+  .data-table thead th { background: var(--ink); color: var(--bg); padding: 10px 14px; text-align: left; font-weight: 600; font-size: 12px; letter-spacing: 0.5px; }
+  .data-table tbody tr:nth-child(even) { background: var(--bg-alt); }
+  .data-table tbody tr:hover { background: var(--accent-pale); }
+  .data-table td { padding: 9px 14px; color: var(--ink-soft); border-bottom: 1px solid var(--rule); }
+  .data-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .data-table .highlight { color: var(--accent); font-weight: 600; }
+  .data-table .up { color: #c0392b; }
+
+  /* STAT CARDS */
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0; }
+  .stat-card { background: var(--bg-alt); border: 1px solid var(--rule); border-top: 3px solid var(--accent); padding: 18px 16px; text-align: center; }
+  .stat-card.blue { border-top-color: var(--blue); }
+  .stat-card.green { border-top-color: var(--green); }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; line-height: 1.1; }
+  .stat-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-muted); margin-top: 6px; }
+  .stat-sub { font-size: 12px; color: var(--ink-muted); margin-top: 4px; font-style: italic; }
+
+  /* BAR CHART */
+  .bar-chart { margin: 20px 0 28px; }
+  .bar-chart-label { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-muted); margin-bottom: 14px; }
+  .bar-row { display: flex; align-items: center; margin-bottom: 10px; gap: 12px; }
+  .bar-label { width: 180px; font-size: 13px; color: var(--ink-soft); text-align: right; flex-shrink: 0; }
+  .bar-track { flex: 1; background: var(--bg-alt); border: 1px solid var(--rule); height: 22px; }
+  .bar-fill { height: 100%; background: var(--accent); }
+  .bar-fill.blue { background: var(--blue); }
+  .bar-fill.green { background: var(--green); }
+  .bar-fill.gold { background: var(--gold); }
+  .bar-val { width: 56px; font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+  /* TREND */
+  .trend { font-size: 12px; margin-left: 6px; }
+  .trend.up { color: #c0392b; }
+  .trend.down { color: var(--green); }
+  .trend.stable { color: var(--gold); }
+
+  /* DIVIDERS */
+  .rule { border: none; border-top: 1px solid var(--rule); margin: 56px 0; }
+  .section-break { text-align: center; margin: 60px 0; position: relative; }
+  .section-break::before, .section-break::after { content: ''; position: absolute; top: 50%; width: 38%; height: 1px; background: var(--rule); }
+  .section-break::before { left: 0; }
+  .section-break::after { right: 0; }
+  .section-break span { font-family: 'Playfair Display', serif; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--ink-muted); background: var(--bg); padding: 0 16px; position: relative; }
+
+  /* RECOMMENDATIONS */
+  .rec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+  .rec-card { background: var(--bg-alt); border: 1px solid var(--rule); border-top: 3px solid var(--accent); padding: 20px; position: relative; }
+  .rec-num { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; color: var(--accent-pale); line-height: 1; position: absolute; top: 12px; right: 16px; }
+  .rec-title { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 8px; padding-right: 40px; line-height: 1.4; }
+  .rec-body { font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+
+  /* VULNERABILITY MATRIX */
+  .vuln-grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--rule); margin: 24px 0; }
+  .vuln-card { padding: 20px; border-right: 1px solid var(--rule); }
+  .vuln-card:last-child { border-right: none; }
+  .vuln-header { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700; padding: 6px 10px; margin: -20px -20px 14px; color: white; }
+  .vuln-header.clinical { background: var(--accent); }
+  .vuln-header.behavior { background: var(--blue); }
+  .vuln-header.economic { background: var(--green); }
+  .vuln-group { margin-bottom: 10px; }
+  .vuln-label { font-size: 11px; letter-spacing: 0.5px; color: var(--ink-muted); text-transform: uppercase; margin-bottom: 3px; }
+  .vuln-value { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* DARK METODOLOGIA BLOCK */
+  .metodo-block { background: var(--ink); color: var(--bg); margin: 24px -40px 24px; padding: 52px 40px 48px; }
+  .metodo-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent-light); font-weight: 600; margin-bottom: 10px; }
+  .metodo-subtitle { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: var(--bg); border-bottom: 1px solid #3d3630; padding-bottom: 10px; margin-bottom: 8px; }
+  .metodo-intro { color: #c8bfb0; font-size: 14px; margin-bottom: 30px; font-style: italic; }
+
+  .pipeline { display: flex; flex-direction: column; margin-bottom: 32px; }
+  .pipe-step { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; position: relative; }
+  .pipe-step:last-child { margin-bottom: 0; }
+  .pipe-icon { width: 40px; height: 40px; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; margin-top: 3px; }
+  .pipe-final .pipe-icon { background: var(--green); }
+  .pipe-connector { position: absolute; left: 19px; top: 44px; width: 2px; height: 20px; background: #3d3630; }
+  .pipe-step:last-child .pipe-connector { display: none; }
+  .pipe-content { flex: 1; background: #2a2520; padding: 12px 16px; border-left: 2px solid #3d3630; }
+  .pipe-title { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: var(--bg); margin-bottom: 3px; }
+  .pipe-body { font-size: 13px; color: #a89e95; line-height: 1.6; }
+  .pipe-body code { background: #1a1612; color: var(--accent-light); padding: 1px 5px; font-size: 11.5px; border-radius: 2px; }
+  .metodo-block code { background: #1a1612; color: var(--accent-light); padding: 1px 5px; font-size: 11.5px; border-radius: 2px; }
+
+  .variaveis-block { background: #2a2520; border: 1px solid #3d3630; padding: 22px; margin-bottom: 28px; }
+  .variaveis-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; color: var(--bg); margin-bottom: 16px; }
+  .variaveis-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 12px; }
+  .var-grupo-label { color: white; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700; padding: 5px 10px; margin-bottom: 4px; }
+  .var-item { font-size: 12px; color: #a89e95; padding: 3px 10px; border-bottom: 1px solid #3d3630; line-height: 1.5; }
+  .variaveis-note { font-size: 11px; color: #6b6058; text-align: center; padding-top: 10px; border-top: 1px solid #3d3630; }
+
+  .decisoes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 32px; }
+  .decisao-card { background: #2a2520; border: 1px solid #3d3630; padding: 16px; }
+  .decisao-icon { font-size: 20px; margin-bottom: 5px; }
+  .decisao-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #6b6058; margin-bottom: 6px; }
+  .decisao-text { font-size: 12.5px; color: #a89e95; line-height: 1.6; }
+  .decisao-text code { background: #1a1612; color: var(--accent-light); padding: 1px 4px; font-size: 11px; border-radius: 2px; }
+
+  .sample-stat-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+  .sample-stat { background: #2a2520; border: 1px solid #3d3630; border-top: 2px solid var(--accent); padding: 14px; text-align: center; }
+  .sample-stat.b { border-top-color: var(--blue); }
+  .sample-stat.g { border-top-color: var(--green); }
+  .sample-val { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 700; color: var(--bg); }
+  .sample-lbl { font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: #6b6058; margin-top: 4px; }
+
+  /* APPENDIX */
+  .appendix-header { background: var(--ink); margin: 0 -40px 36px; padding: 26px 40px; display: flex; align-items: center; gap: 18px; }
+  .appendix-tag { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-muted); background: #2a2520; padding: 4px 10px; border: 1px solid #3d3630; flex-shrink: 0; }
+  .appendix-title-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--bg); }
+
+  .bq-badge { display: inline-flex; align-items: center; gap: 8px; background: #e8f0fe; border: 1px solid #4285f4; padding: 8px 16px; font-size: 13px; color: var(--ink); margin: 0 0 28px; border-radius: 2px; flex-wrap: wrap; }
+  .bq-dot { width: 8px; height: 8px; background: #4285f4; border-radius: 50%; flex-shrink: 0; }
+  .bq-badge code { background: #d2e3fc; padding: 1px 6px; border-radius: 2px; font-size: 12px; color: #174ea6; }
+  .bq-link { color: #1967d2; font-weight: 600; text-decoration: none; font-size: 12px; }
+  .bq-link:hover { text-decoration: underline; }
+
+  .sql-card { border: 1px solid var(--rule); margin-bottom: 20px; background: #1e1b18; }
+  .sql-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 14px 18px; background: #2a2520; border-bottom: 1px solid #3d3630; gap: 16px; flex-wrap: wrap; }
+  .sql-meta { display: flex; align-items: flex-start; gap: 12px; }
+  .sql-num { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--accent-pale); line-height: 1; flex-shrink: 0; }
+  .sql-title { font-size: 14px; font-weight: 600; color: #f5f0e8; margin-bottom: 3px; }
+  .sql-desc { font-size: 12px; color: #7a6f65; font-style: italic; }
+  .sql-desc code { background: #1a1612; color: var(--accent-light); padding: 0 4px; font-size: 11px; font-style: normal; }
+  .sql-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+  .btn-copy { background: #3d3630; color: #c8bfb0; border: 1px solid #5a5048; padding: 6px 14px; font-size: 12px; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .btn-copy:hover { background: #5a5048; color: #f5f0e8; }
+  .btn-copy.copied { background: var(--green); color: white; border-color: var(--green); }
+  .btn-bq { background: #4285f4; color: white; border: none; padding: 6px 14px; font-size: 12px; text-decoration: none; font-weight: 600; display: inline-block; transition: background 0.15s; }
+  .btn-bq:hover { background: #1967d2; }
+  .sql-code { margin: 0; padding: 24px 26px; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 14px; line-height: 2; color: #d4cfc9; background: #141210; }
+  .sql-code code { background: transparent; padding: 0; font-size: inherit; color: inherit; border-radius: 0; }
+  .sql-code span { background: transparent !important; padding: 0; }
+  .sql-code .kw  { color: #79c0ff; font-weight: 700; }
+  .sql-code .str { color: #7ee787; }
+  .sql-code .tbl { color: #e3b341; }
+  .sql-code .fn  { color: #d2a8ff; }
+  .sql-note { background: var(--gold-pale); border: 1px solid var(--gold); border-left: 3px solid var(--gold); padding: 12px 16px; font-size: 13px; color: var(--ink-soft); margin-top: 8px; }
+  .sql-note code { background: white; color: var(--gold); padding: 1px 5px; font-size: 12px; }
+
+  /* FOOTER */
+  .footer { margin-top: 80px; padding-top: 20px; border-top: 2px solid var(--ink); display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-muted); letter-spacing: 0.5px; flex-wrap: wrap; gap: 8px; }
+
+  /* CONTEXT BOX */
+  .context-box { background: var(--gold-pale); border: 1px solid var(--gold); border-left: 5px solid var(--gold); padding: 28px 32px; margin-bottom: 48px; border-radius: 0 6px 6px 0; }
+  .context-box-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--gold); letter-spacing: 0.5px; margin-bottom: 18px; display: flex; align-items: center; gap: 10px; }
+  .context-box-title::before { content: ''; display: inline-block; width: 20px; height: 3px; background: var(--gold); flex-shrink: 0; }
+  .context-item { margin-bottom: 14px; }
+  .context-item:last-child { margin-bottom: 0; }
+  .context-item-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); font-weight: 700; margin-bottom: 4px; }
+  .context-item-text { font-size: 14.5px; color: var(--ink-soft); line-height: 1.65; }
+  .context-item-text strong { color: var(--ink); }
+
+  /* READING GUIDE */
+  .reading-guide { background: var(--blue-pale); border: 1px solid var(--blue); border-left: 5px solid var(--blue); padding: 28px 32px; margin-bottom: 48px; border-radius: 0 6px 6px 0; }
+  .reading-guide-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--blue); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+  .reading-guide-title::before { content: ''; display: inline-block; width: 20px; height: 3px; background: var(--blue); flex-shrink: 0; }
+  .guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .guide-card { background: white; border: 1px solid var(--blue-pale); padding: 16px 18px; border-radius: 4px; }
+  .guide-question { font-size: 12px; letter-spacing: 0.5px; font-weight: 700; color: var(--blue); text-transform: uppercase; margin-bottom: 6px; }
+  .guide-answer { font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+  .guide-answer strong { color: var(--ink); }
+
+  /* PLAIN-LANGUAGE PIPELINE */
+  .plain-pipeline { margin: 32px 0 8px; }
+  .plain-pipeline-title { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--ink-muted); font-weight: 700; margin-bottom: 20px; }
+  .plain-steps { display: flex; flex-direction: column; gap: 0; }
+  .plain-step { display: flex; align-items: stretch; gap: 0; }
+  .plain-step-left { display: flex; flex-direction: column; align-items: center; width: 48px; flex-shrink: 0; }
+  .plain-step-badge { width: 36px; height: 36px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: white; flex-shrink: 0; margin-top: 10px; }
+  .plain-step-badge.blue { background: var(--blue); }
+  .plain-step-badge.green { background: var(--green); }
+  .plain-step-line { width: 2px; background: var(--rule); flex: 1; margin: 4px 0; }
+  .plain-step:last-child .plain-step-line { display: none; }
+  .plain-step-body { flex: 1; background: var(--bg-alt); border: 1px solid var(--rule); border-radius: 4px; padding: 14px 18px; margin: 6px 0 8px 12px; }
+  .plain-step-heading { font-family: 'Playfair Display', serif; font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .plain-step-text { font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+  .plain-step-text em { color: var(--accent); font-style: normal; font-weight: 600; }
+
+  /* INSIGHT CALLOUT */
+  .insight { background: var(--green-pale); border: 1px solid var(--green); border-left: 4px solid var(--green); padding: 14px 20px; margin: 8px 0 28px; border-radius: 0 4px 4px 0; font-size: 14px; color: var(--ink-soft); line-height: 1.65; }
+  .insight-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--green); font-weight: 700; margin-bottom: 5px; }
+  .insight strong { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<!-- CAPA -->
+<div class="cover">
+  <div class="cover-label">Relatório Analítico · Tech Challenge Fase 03</div>
+  <h1>Comportamento Populacional e<br><em>Impacto da COVID-19</em></h1>
+  <p class="cover-sub">Análise da PNAD-COVID-19 / IBGE — Setembro a Novembro de 2020</p>
+  <div class="cover-meta">
+    <div>Base · <span>PNAD-COVID-19 IBGE</span></div>
+    <div>Período · <span>Set–Nov 2020</span></div>
+    <div>Registros · <span>810 grupos</span></div>
+    <div>Autores · <span>Leonardo Fernandes Sbardelotto</span></div>
+  </div>
+</div>
+
+<!-- SUMÁRIO -->
+<nav class="toc">
+  <div class="toc-title">Sumário</div>
+  <ul class="toc-list">
+    <div class="toc-group">Contextualização</div>
+    <li><span class="toc-num">01</span><a href="#introducao">Introdução</a><span class="toc-dots"></span></li>
+    <li><span class="toc-num">02</span><a href="#metodologia">Metodologia e Organização do Banco de Dados</a><span class="toc-dots"></span></li>
+    <div class="toc-group">Análise dos Resultados</div>
+    <li><span class="toc-num">03</span><a href="#sintomas">Caracterização Clínica dos Sintomas</a><span class="toc-dots"></span></li>
+    <li><span class="toc-num">04</span><a href="#comportamento">Padrões de Comportamento da População</a><span class="toc-dots"></span></li>
+    <li><span class="toc-num">05</span><a href="#economico">Impacto Econômico</a><span class="toc-dots"></span></li>
+    <li><span class="toc-num">06</span><a href="#vulnerabilidade">Grupos Vulneráveis e Diferenças Regionais</a><span class="toc-dots"></span></li>
+    <div class="toc-group">Conclusão</div>
+    <li><span class="toc-num">07</span><a href="#recomendacoes">Recomendações para Novo Surto</a><span class="toc-dots"></span></li>
+    <li><span class="toc-num">08</span><a href="#conclusoes">Conclusões</a><span class="toc-dots"></span></li>
+    <div class="toc-group">Material de Apoio</div>
+    <li class="toc-appendix"><span class="toc-num">A</span><a href="#apendice-sql">Apêndice — Referência SQL e Queries do Projeto</a><span class="toc-dots"></span></li>
+  </ul>
+</nav>
+
+<!-- CONTEXT BOX -->
+<div class="context-box">
+  <div class="context-box-title">O que você precisa saber antes de ler este relatório</div>
+  <div class="context-item">
+    <div class="context-item-label">O que é a PNAD-COVID-19?</div>
+    <div class="context-item-text">É a <strong>Pesquisa Nacional por Amostra de Domicílios COVID-19</strong>, conduzida pelo <strong>IBGE</strong> (o instituto do governo responsável por censos e estatísticas no Brasil). Durante a pandemia, o IBGE entrevistou dezenas de milhares de domicílios todo mês para entender como a população estava sendo afetada — sintomas, comportamento, renda. Este relatório analisa os dados de <strong>setembro, outubro e novembro de 2020</strong>.</div>
+  </div>
+  <div class="context-item">
+    <div class="context-item-label">O que é o BigQuery e por que foi usado?</div>
+    <div class="context-item-text"><strong>BigQuery</strong> é um banco de dados em nuvem do Google, capaz de processar milhões de linhas em segundos. Pense nele como um Excel muito mais poderoso que funciona na internet. Foi escolhido porque os microdados da PNAD-COVID-19 somam mais de <strong>1,15 milhão de registros</strong> — volume inviável para planilhas convencionais.</div>
+  </div>
+  <div class="context-item">
+    <div class="context-item-label">O que representa o período analisado?</div>
+    <div class="context-item-text">Os três meses cobrem um momento crítico: o Brasil saía da primeira onda e os dados já sinalizavam o início da segunda. Ao todo, a análise cobre <strong>810 grupos</strong> formados pela combinação de 27 estados × 5 faixas etárias × 2 sexos × 3 meses.</div>
+  </div>
+  <div class="context-item">
+    <div class="context-item-label">Este relatório é para mim?</div>
+    <div class="context-item-text">Sim. O relatório foi escrito para ser compreendido mesmo por quem <strong>não tem formação técnica em dados</strong>. Os termos técnicos aparecem explicados quando necessário, e cada gráfico ou tabela vem acompanhado de uma caixa de interpretação em linguagem simples.</div>
+  </div>
+</div>
+
+<!-- READING GUIDE -->
+<div class="reading-guide">
+  <div class="reading-guide-title">Guia de Leitura — Termos que aparecem neste relatório</div>
+  <div class="guide-grid">
+    <div class="guide-card">
+      <div class="guide-question">O que é o IBGE?</div>
+      <div class="guide-answer">O <strong>Instituto Brasileiro de Geografia e Estatística</strong> é o órgão federal responsável por coletar e publicar dados sobre a população brasileira — como o censo demográfico, índices de desemprego e, durante a pandemia, a PNAD-COVID-19.</div>
+    </div>
+    <div class="guide-card">
+      <div class="guide-question">O que é a PNAD?</div>
+      <div class="guide-answer">A <strong>Pesquisa Nacional por Amostra de Domicílios</strong> é uma pesquisa periódica do IBGE que visita uma amostra de lares brasileiros para coletar informações sobre renda, saúde, trabalho e condições de vida. Durante a COVID-19, ganhou uma versão especial mensal.</div>
+    </div>
+    <div class="guide-card">
+      <div class="guide-question">O que significa "ponderado por domicílio"?</div>
+      <div class="guide-answer">Os dados da PNAD não são uma contagem simples — cada entrevistado representa um número diferente de pessoas na população. <strong>Ponderar</strong> significa ajustar os cálculos para que os resultados reflitam o Brasil inteiro, não apenas quem foi entrevistado.</div>
+    </div>
+    <div class="guide-card">
+      <div class="guide-question">O que é o BigQuery?</div>
+      <div class="guide-answer">Um <strong>banco de dados em nuvem do Google</strong>, usado para armazenar e consultar grandes volumes de dados com SQL. Neste projeto, foi usado para reunir os dados brutos dos três meses e calcular todos os indicadores deste relatório.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 01 INTRODUÇÃO ─── -->
+<section id="introducao">
+  <div class="section-number">01</div>
+  <h2>Introdução</h2>
+  <p>O presente relatório tem por objetivo analisar os dados da <strong>Pesquisa Nacional por Amostra de Domicílios COVID-19 (PNAD-COVID-19)</strong>, conduzida pelo IBGE, com foco no período entre setembro e novembro de 2020. Tal intervalo representa um momento crítico da pandemia no Brasil, marcado pela transição entre a primeira onda e sinais de arrefecimento, antecedendo a segunda onda que se consolidaria no início de 2021.</p>
+  <p>A análise foi produzida no contexto do <strong>Tech Challenge Fase 03</strong> do programa POS TECH, atendendo à demanda de um grande hospital por uma base analítica que subsidie o planejamento em caso de novo surto. A base foi estruturada a partir de respostas agregadas por mês de referência, UF, faixa etária e sexo — totalizando <strong>810 grupos</strong> e aproximadamente <strong>1,15 milhão de registros individuais</strong>.</p>
+  <p>A análise está organizada em três eixos: <strong>(i)</strong> caracterização clínica dos sintomas; <strong>(ii)</strong> padrões de comportamento da população; e <strong>(iii)</strong> impacto econômico. Transversalmente a esses eixos, as <strong>características da população</strong> — Unidade Federativa, faixa etária e sexo — funcionam como variáveis de estratificação, permitindo identificar grupos mais vulneráveis e formular recomendações práticas para o planejamento hospitalar.</p>
+  <div class="callout"><strong>Nota metodológica:</strong> todos os indicadores percentuais foram calculados como médias ponderadas pelo total de pessoas em cada grupo, garantindo representatividade proporcional. As queries utilizadas estão documentadas no Apêndice A.</div>
+</section>
+
+<div class="section-break"><span>Metodologia</span></div>
+
+<!-- ─── 02 METODOLOGIA ─── -->
+<section id="metodologia">
+  <div class="section-number">02</div>
+  <h2>Metodologia e Organização do Banco de Dados</h2>
+  <p>Esta seção descreve as decisões técnicas que orientaram a organização do banco de dados, a seleção de variáveis e o tratamento dos dados — desde a ingestão dos microdados brutos até a produção de uma base analítica consolidada.</p>
+
+  <h3>2.1 Escolha do banco de dados</h3>
+  <p>O <strong>Google BigQuery</strong> foi escolhido como banco de dados principal por três razões. Primeiro, sua aderência ao problema: a PNAD-COVID-19 é uma base essencialmente tabular e volumosa, favorecendo um ambiente analítico orientado a SQL. Segundo, sua praticidade técnica na nuvem: permite importar arquivos mensais, estruturar tabelas e executar consultas analíticas de forma simples e escalável. Terceiro, sua adequação acadêmica: como o objetivo não era desenvolver uma aplicação transacional, mas organizar e analisar dados para geração de insights, um data warehouse é mais apropriado que um banco relacional OLTP.</p>
+
+  <h3>2.2 Recorte temporal e ingestão</h3>
+  <p>Foram selecionados três meses consecutivos — <strong>setembro, outubro e novembro de 2020</strong> — respeitando o limite do enunciado e cobrindo um período com variação epidemiológica relevante. Os microdados foram carregados separadamente em três tabelas brutas: <code>pnad_raw_2020_09</code>, <code>pnad_raw_2020_10</code> e <code>pnad_raw_2020_11</code>.</p>
+
+  <h3>2.3 Pipeline de tratamento e perfil da amostra</h3>
+
+  <div class="metodo-block">
+    <div class="metodo-label">Arquitetura em Camadas · Projeto <code style="background:#1a1612;color:var(--accent-light);padding:1px 5px;font-size:11px">tech-challenge-491720</code></div>
+    <div class="metodo-subtitle">Da ingestão bruta ao dado analítico</div>
+    <p class="metodo-intro">Cada etapa foi projetada para garantir consistência e rastreabilidade — queries completas no Apêndice A.</p>
+
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-icon">☁</div>
+        <div class="pipe-content">
+          <div class="pipe-title">Google BigQuery — Banco em Nuvem</div>
+          <div class="pipe-body">Ambiente analítico orientado a SQL, ideal para base tabular volumosa sem complexidade transacional.</div>
+        </div>
+        <div class="pipe-connector"></div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">📥</div>
+        <div class="pipe-content">
+          <div class="pipe-title">Ingestão Separada por Mês — 3 Tabelas Brutas</div>
+          <div class="pipe-body"><code>pnad_raw_2020_09</code>, <code>_10</code> e <code>_11</code> criadas individualmente para conferência antes de qualquer consolidação.</div>
+        </div>
+        <div class="pipe-connector"></div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">🔍</div>
+        <div class="pipe-content">
+          <div class="pipe-title">Validação de Esquema — <code>INFORMATION_SCHEMA.COLUMNS</code></div>
+          <div class="pipe-body">Comparação de nome, tipo, nulidade e posição ordinal. Revelou divergências entre meses — tornando <code>UNION ALL SELECT *</code> inviável.</div>
+        </div>
+        <div class="pipe-connector"></div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-icon">📋</div>
+        <div class="pipe-content">
+          <div class="pipe-title">Documentação de Variáveis — <code>variaveis_projeto</code></div>
+          <div class="pipe-body">Tabela auxiliar com bloco temático, alias e descrição de cada variável. Garante rastreabilidade e demonstra seleção orientada pelos objetivos do estudo.</div>
+        </div>
+        <div class="pipe-connector"></div>
+      </div>
+      <div class="pipe-step pipe-final">
+        <div class="pipe-icon">✓</div>
+        <div class="pipe-content">
+          <div class="pipe-title">Tabela Analítica Final — <code>pnad_tratada_final</code></div>
+          <div class="pipe-body">UNION ALL controlado com seleção explícita de colunas, aliases padronizados, <code>SAFE_CAST</code> para numéricos e coluna <code>mes_referencia</code> adicionada.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="variaveis-block">
+      <div class="variaveis-title">As 20 Variáveis Selecionadas — 4 Grupos Temáticos</div>
+      <div class="variaveis-grid">
+        <div>
+          <div class="var-grupo-label" style="background:#3d3630">Perfil Populacional</div>
+          <div class="var-item">UF (estado)</div>
+          <div class="var-item">Faixa etária</div>
+          <div class="var-item">Sexo</div>
+          <div class="var-item">Mês de referência</div>
+        </div>
+        <div>
+          <div class="var-grupo-label" style="background:var(--accent)">Sintomas Clínicos</div>
+          <div class="var-item">Febre</div>
+          <div class="var-item">Tosse</div>
+          <div class="var-item">Dor de garganta</div>
+          <div class="var-item">Dificuldade respirar</div>
+          <div class="var-item">Dor de cabeça</div>
+          <div class="var-item">Perda olfato/paladar</div>
+        </div>
+        <div>
+          <div class="var-grupo-label" style="background:var(--blue)">Comportamento / Saúde</div>
+          <div class="var-item">Buscou atendimento</div>
+          <div class="var-item">Ficou em casa</div>
+          <div class="var-item">Realizou teste</div>
+          <div class="var-item">Plano de saúde</div>
+          <div class="var-item">Trabalho remoto</div>
+        </div>
+        <div>
+          <div class="var-grupo-label" style="background:var(--green)">Econômico</div>
+          <div class="var-item">Rendimento efetivo</div>
+          <div class="var-item">Auxílio emergencial</div>
+          <div class="var-item">Total de pessoas</div>
+        </div>
+      </div>
+      <div class="variaveis-note">20 variáveis · 4 grupos temáticos · limite do Tech Challenge respeitado · ver queries no Apêndice A</div>
+    </div>
+
+    <div class="decisoes-grid">
+      <div class="decisao-card">
+        <div class="decisao-icon" style="color:var(--accent)">✕</div>
+        <div class="decisao-label">Evitado</div>
+        <div class="decisao-text"><code>UNION ALL SELECT *</code> descartado após schemas divergentes — risco de desalinhamento silencioso de colunas.</div>
+      </div>
+      <div class="decisao-card">
+        <div class="decisao-icon" style="color:#4fc3f7">✓</div>
+        <div class="decisao-label">Adotado</div>
+        <div class="decisao-text">Seleção explícita de colunas + aliases + <code>SAFE_CAST</code> para campos numéricos. Consolidação controlada e auditável.</div>
+      </div>
+      <div class="decisao-card">
+        <div class="decisao-icon" style="color:var(--green)">⚑</div>
+        <div class="decisao-label">Recorte Temporal</div>
+        <div class="decisao-text">Set–Nov 2020: abrange queda de outubro e retomada em novembro — variação essencial para identificar tendências epidemiológicas.</div>
+      </div>
+    </div>
+
+    <div class="metodo-label">Perfil da Amostra</div>
+    <div class="sample-stat-grid">
+      <div class="sample-stat"><div class="sample-val">387k</div><div class="sample-lbl">Respondentes · Set/2020</div></div>
+      <div class="sample-stat b"><div class="sample-val">380k</div><div class="sample-lbl">Respondentes · Out/2020</div></div>
+      <div class="sample-stat g"><div class="sample-val">381k</div><div class="sample-lbl">Respondentes · Nov/2020</div></div>
+    </div>
+  </div>
+
+  <div class="plain-pipeline">
+    <div class="plain-pipeline-title">O que aconteceu com os dados — passo a passo, em linguagem simples</div>
+    <div class="plain-steps">
+
+      <div class="plain-step">
+        <div class="plain-step-left">
+          <div class="plain-step-badge">1</div>
+          <div class="plain-step-line"></div>
+        </div>
+        <div class="plain-step-body">
+          <div class="plain-step-heading">Coleta dos dados brutos</div>
+          <div class="plain-step-text">O IBGE disponibiliza os microdados da PNAD-COVID-19 em arquivos separados por mês. Baixamos os arquivos de setembro, outubro e novembro de 2020 e os carregamos como três tabelas independentes no BigQuery — uma para cada mês. Isso totaliza <em>cerca de 1,15 milhão de registros</em>.</div>
+        </div>
+      </div>
+
+      <div class="plain-step">
+        <div class="plain-step-left">
+          <div class="plain-step-badge">2</div>
+          <div class="plain-step-line"></div>
+        </div>
+        <div class="plain-step-body">
+          <div class="plain-step-heading">Verificação de compatibilidade</div>
+          <div class="plain-step-text">Antes de unir os três meses, verificamos se as colunas tinham os mesmos nomes e tipos em cada arquivo. Descobrimos diferenças entre os meses — o que significa que simplesmente "empilhar" as tabelas teria misturado colunas erradas. Essa verificação impediu um erro silencioso nos resultados.</div>
+        </div>
+      </div>
+
+      <div class="plain-step">
+        <div class="plain-step-left">
+          <div class="plain-step-badge">3</div>
+          <div class="plain-step-line"></div>
+        </div>
+        <div class="plain-step-body">
+          <div class="plain-step-heading">Seleção das 20 variáveis relevantes</div>
+          <div class="plain-step-text">Os arquivos originais têm centenas de colunas. Selecionamos apenas as <em>20 variáveis</em> necessárias para responder às perguntas do estudo: sintomas clínicos, comportamento da população, renda e recebimento de auxílio. Cada variável foi documentada com seu significado para garantir rastreabilidade.</div>
+        </div>
+      </div>
+
+      <div class="plain-step">
+        <div class="plain-step-left">
+          <div class="plain-step-badge blue">4</div>
+          <div class="plain-step-line"></div>
+        </div>
+        <div class="plain-step-body">
+          <div class="plain-step-heading">União controlada dos três meses</div>
+          <div class="plain-step-text">Com as colunas verificadas e selecionadas, unimos os três meses em uma única tabela — explicitando cada coluna pelo nome, não por posição. Uma coluna extra (<em>mês de referência</em>) foi adicionada para identificar a qual mês cada registro pertence.</div>
+        </div>
+      </div>
+
+      <div class="plain-step">
+        <div class="plain-step-left">
+          <div class="plain-step-badge green">5</div>
+          <div class="plain-step-line"></div>
+        </div>
+        <div class="plain-step-body">
+          <div class="plain-step-heading">Cálculo dos indicadores analíticos</div>
+          <div class="plain-step-text">A partir da tabela unificada, calculamos percentuais e médias agrupando os dados por mês, estado (UF), faixa etária e sexo. Isso gerou os <em>810 grupos analíticos</em> que fundamentam todos os gráficos e tabelas deste relatório. As queries completas estão no Apêndice A.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <p style="margin-top:24px">A amostra cobre <strong>27 UFs</strong> (incluindo o DF) e <strong>5 faixas etárias</strong> (0–17, 18–29, 30–44, 45–59 e 60+), estratificadas por sexo. O tamanho amostral permanece estável nos três meses, conferindo comparabilidade temporal consistente à análise.</p>
+</section>
+
+<div class="section-break"><span>Análise dos Resultados</span></div>
+
+<!-- ─── 03 SINTOMAS ─── -->
+<section id="sintomas">
+  <div class="section-number">03</div>
+  <h2>Caracterização Clínica dos Sintomas</h2>
+
+  <h3>3.1 Prevalência e hierarquia</h3>
+  <p>A <strong>dor de cabeça</strong> destacou-se como o sintoma mais prevalente (1,87% em setembro), seguida pela <strong>tosse</strong> (1,44%) e pela <strong>dor de garganta</strong> (1,10%). Sintomas de maior gravidade clínica — <strong>dificuldade para respirar</strong> (0,47%) e <strong>perda de olfato/paladar</strong> (0,42%) — apresentaram incidência absoluta menor, mas são marcadores específicos do SARS-CoV-2 e de alto valor diagnóstico.</p>
+
+  <div class="bar-chart">
+    <div class="bar-chart-label">Incidência média ponderada — Setembro/2020 (% da população)</div>
+    <div class="bar-row"><div class="bar-label">Dor de Cabeça</div><div class="bar-track"><div class="bar-fill" style="width:94%"></div></div><div class="bar-val">1,87%</div></div>
+    <div class="bar-row"><div class="bar-label">Tosse</div><div class="bar-track"><div class="bar-fill" style="width:72%"></div></div><div class="bar-val">1,44%</div></div>
+    <div class="bar-row"><div class="bar-label">Dor de Garganta</div><div class="bar-track"><div class="bar-fill" style="width:55%"></div></div><div class="bar-val">1,10%</div></div>
+    <div class="bar-row"><div class="bar-label">Febre</div><div class="bar-track"><div class="bar-fill blue" style="width:40%"></div></div><div class="bar-val">0,80%</div></div>
+    <div class="bar-row"><div class="bar-label">Dif. Respirar</div><div class="bar-track"><div class="bar-fill gold" style="width:24%"></div></div><div class="bar-val">0,47%</div></div>
+    <div class="bar-row"><div class="bar-label">Perda Olfato/Paladar</div><div class="bar-track"><div class="bar-fill green" style="width:21%"></div></div><div class="bar-val">0,42%</div></div>
+  </div>
+  <div class="insight">
+    <div class="insight-label">O que este gráfico nos diz</div>
+    A dor de cabeça e a tosse dominaram o quadro clínico — sintomas comuns a muitas doenças respiratórias. Mas os dois últimos da lista, <strong>dificuldade para respirar e perda de olfato/paladar</strong>, são os mais importantes clinicamente: são marcadores específicos da COVID-19, ou seja, quando aparecem, aumentam muito a probabilidade de ser COVID e não outra gripe. Mesmo com percentuais menores, essas ocorrências representam <strong>centenas de milhares de pessoas</strong> numa população de 1,15 milhão.
+  </div>
+
+  <h3>3.2 Evolução temporal — o padrão em "V"</h3>
+  <p>A trajetória mensal revela <strong>queda entre setembro e outubro, seguida de retomada em novembro</strong> — movimento em "V" sugestivo do início da segunda onda epidemiológica.</p>
+
+  <table class="data-table">
+    <thead><tr><th>Sintoma</th><th class="num">Set/2020</th><th class="num">Out/2020</th><th class="num">Nov/2020</th><th>Tendência</th></tr></thead>
+    <tbody>
+      <tr><td>Dor de Cabeça</td><td class="num">1,87%</td><td class="num">1,53%</td><td class="num">1,56%</td><td><span class="trend down">↘ queda</span></td></tr>
+      <tr><td>Tosse</td><td class="num">1,44%</td><td class="num">1,21%</td><td class="num">1,38%</td><td><span class="trend stable">↘↗ padrão V</span></td></tr>
+      <tr><td>Dor de Garganta</td><td class="num">1,10%</td><td class="num">1,02%</td><td class="num">1,17%</td><td><span class="trend stable">↘↗ padrão V</span></td></tr>
+      <tr><td>Febre</td><td class="num">0,80%</td><td class="num">0,73%</td><td class="num">0,83%</td><td><span class="trend stable">↘↗ padrão V</span></td></tr>
+      <tr><td>Dif. Respirar</td><td class="num">0,47%</td><td class="num">0,38%</td><td class="num">0,41%</td><td><span class="trend down">↘ queda</span></td></tr>
+      <tr><td>Perda Olfato/Paladar</td><td class="num">0,42%</td><td class="num">0,35%</td><td class="num">0,39%</td><td><span class="trend stable">↘↗ padrão V</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-gold">O padrão em "V" em tosse, febre e perda de olfato/paladar indica <strong>início de nova elevação da carga viral em novembro</strong>, coerente com a dinâmica da segunda onda brasileira. Reduções temporárias não devem ser interpretadas como resolução do surto.</div>
+  <div class="insight">
+    <div class="insight-label">O que esta tabela nos diz</div>
+    Olhando linha a linha, quase todos os sintomas <strong>caíram de setembro para outubro e voltaram a subir em novembro</strong> — formando um "V". Isso é um sinal de alerta: quem interpretasse outubro como "a pandemia está acabando" estaria errado. Novembro já mostrava a curva subindo de novo, antecipando a segunda onda que se consolidaria em 2021. Para um hospital, isso significa: <strong>nunca desmontar a estrutura de atendimento com base em um único mês de queda</strong>.
+  </div>
+
+  <h3>3.3 Variação por faixa etária</h3>
+  <p>A dor de cabeça é mais prevalente em <strong>adultos de 30–44 anos</strong> (2,20%) e <strong>45–59 anos</strong> (2,18%). Os <strong>idosos (60+)</strong> destacam-se pela maior tosse (1,58%) e dificuldade respiratória (0,53%) — sintomas de maior gravidade —, configurando-se como o grupo de maior vulnerabilidade clínica.</p>
+
+  <table class="data-table">
+    <thead><tr><th>Faixa Etária</th><th class="num">Febre</th><th class="num">Tosse</th><th class="num">Dif. Respirar</th><th class="num">Dor Cabeça</th><th class="num">Perda Olfato</th></tr></thead>
+    <tbody>
+      <tr><td>0–17 anos</td><td class="num">0,78%</td><td class="num">1,07%</td><td class="num">0,21%</td><td class="num">0,63%</td><td class="num">0,16%</td></tr>
+      <tr><td>18–29 anos</td><td class="num">0,87%</td><td class="num">1,31%</td><td class="num">0,40%</td><td class="num">1,76%</td><td class="num">0,46%</td></tr>
+      <tr><td>30–44 anos</td><td class="num highlight">0,89%</td><td class="num">1,40%</td><td class="num">0,51%</td><td class="num highlight">2,20%</td><td class="num highlight">0,56%</td></tr>
+      <tr><td>45–59 anos</td><td class="num">0,79%</td><td class="num">1,41%</td><td class="num">0,49%</td><td class="num">2,18%</td><td class="num">0,44%</td></tr>
+      <tr><td>60+ anos</td><td class="num">0,59%</td><td class="num highlight">1,58%</td><td class="num highlight">0,53%</td><td class="num">1,65%</td><td class="num">0,34%</td></tr>
+    </tbody>
+  </table>
+  <div class="insight">
+    <div class="insight-label">O que esta tabela nos diz</div>
+    Os idosos (60+) apresentaram a maior tosse e a maior dificuldade para respirar — os dois sintomas que mais frequentemente resultam em internação. Já adultos de 30–44 anos lideraram em dor de cabeça e perda de olfato/paladar, que são sintomas típicos de casos moderados. Para um hospital, isso significa: <strong>preparar UTI e leitos de observação pensando primeiro nos idosos</strong>, mas não subestimar a demanda de adultos em idade ativa, que também chegam em grande número.
+  </div>
+
+  <h3>3.4 Variação por sexo</h3>
+  <p>Mulheres apresentaram <strong>incidência sistematicamente superior</strong> em todos os sintomas, com destaque para dor de cabeça (2,03% vs. 1,25% nos homens) e dificuldade respiratória (0,47% vs. 0,36%).</p>
+
+  <h3>3.5 Variação regional — UFs com maior incidência</h3>
+  <p>O <strong>Amapá (AP)</strong> liderou em três indicadores simultâneos: tosse (1,57%), dificuldade respiratória (0,72%) e perda de olfato/paladar (0,94%). Pará, Goiás e Amazonas também figuraram entre os estados com maior prevalência de sintomas respiratórios.</p>
+
+  <table class="data-table">
+    <thead><tr><th>UF — Top sintomas respiratórios</th><th class="num">Tosse</th><th class="num">Dif. Respirar</th><th class="num">Perda Olfato</th></tr></thead>
+    <tbody>
+      <tr><td class="highlight">AP — Amapá</td><td class="num">1,57%</td><td class="num">0,72%</td><td class="num">0,94%</td></tr>
+      <tr><td>PA — Pará</td><td class="num">1,91%</td><td class="num">0,57%</td><td class="num">—</td></tr>
+      <tr><td>GO — Goiás</td><td class="num">1,83%</td><td class="num">0,68%</td><td class="num">0,67%</td></tr>
+      <tr><td>AM — Amazonas</td><td class="num">1,54%</td><td class="num">0,57%</td><td class="num">0,62%</td></tr>
+      <tr><td>RS — Rio Grande do Sul</td><td class="num">1,76%</td><td class="num">0,66%</td><td class="num">—</td></tr>
+    </tbody>
+  </table>
+  <div class="insight">
+    <div class="insight-label">O que esta tabela nos diz</div>
+    O Amapá se destacou como o estado com maior concentração de sintomas respiratórios graves — tosse, dificuldade de respirar e perda de olfato/paladar simultaneamente elevados. Estados do Norte como Pará e Amazonas também aparecem com frequência. Isso reflete tanto a propagação da doença nessas regiões quanto a <strong>menor capacidade instalada de saúde</strong> para absorver a demanda. Um mesmo percentual de sintomas representa uma pressão muito maior sobre um hospital do interior do Amapá do que sobre um hospital de São Paulo.
+  </div>
+</section>
+
+<!-- ─── 04 COMPORTAMENTO ─── -->
+<section id="comportamento">
+  <div class="section-number">04</div>
+  <h2>Padrões de Comportamento da População</h2>
+
+  <h3>4.1 Busca por atendimento</h3>
+  <p>Observa-se <strong>crescimento contínuo na busca por atendimento médico</strong>: de 24,7% em setembro para 29,2% em novembro (+18%). A permanência em casa manteve-se estável em 73–74%, indicando que a mobilização por atendimento ocorreu em adição ao isolamento.</p>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-value">24,7%</div><div class="stat-label">Buscou Atendimento</div><div class="stat-sub">Setembro/2020</div></div>
+    <div class="stat-card blue"><div class="stat-value">27,1%</div><div class="stat-label">Buscou Atendimento</div><div class="stat-sub">Outubro/2020</div></div>
+    <div class="stat-card green"><div class="stat-value">29,2%</div><div class="stat-label">Buscou Atendimento</div><div class="stat-sub">Novembro/2020</div></div>
+  </div>
+  <div class="insight">
+    <div class="insight-label">O que estes números nos dizem</div>
+    A busca por atendimento cresceu <strong>18% em apenas dois meses</strong> (de 24,7% para 29,2%). Isso significa que, se em setembro 1 em cada 4 pessoas com sintomas foi a uma UPA ou hospital, em novembro já era quase 1 em cada 3. Para a gestão hospitalar, esse crescimento é um sinal direto de aumento de demanda — e ele aconteceu mesmo antes do pico da segunda onda, indicando que os serviços precisam se preparar <strong>antes</strong> dos números chegarem ao limite.
+  </div>
+
+  <h3>4.2 Testagem — cobertura ainda insuficiente</h3>
+  <p>A testagem cresceu de forma consistente: <strong>10,1% → 11,7% → 13,1%</strong>, mas os valores permanecem baixos para o período, comprometendo a vigilância epidemiológica.</p>
+  <div class="callout callout-blue">A subnotificação decorrente da baixa testagem é um fator crítico: a demanda real por leitos pode superar expressivamente os casos notificados.</div>
+
+  <h3>4.3 Comportamento por faixa etária</h3>
+  <p>O trabalho remoto caiu levemente (60,8% → 58,2%), sinalizando retomada de atividades presenciais. Adultos de 30–44 anos registraram a <strong>maior taxa de testagem</strong> (16,6%); idosos exibiram maior isolamento domiciliar (79,7%); crianças permaneceram mais em casa (83,4%) mas com testagem mínima (4,6%).</p>
+
+  <table class="data-table">
+    <thead><tr><th>Faixa Etária</th><th class="num">Buscou Atend.</th><th class="num">Ficou em Casa</th><th class="num">Fez Teste</th></tr></thead>
+    <tbody>
+      <tr><td>0–17 anos</td><td class="num">27,4%</td><td class="num highlight">83,4%</td><td class="num">4,6%</td></tr>
+      <tr><td>18–29 anos</td><td class="num">27,9%</td><td class="num">68,9%</td><td class="num">13,0%</td></tr>
+      <tr><td>30–44 anos</td><td class="num highlight">28,5%</td><td class="num">66,7%</td><td class="num highlight">16,6%</td></tr>
+      <tr><td>45–59 anos</td><td class="num">26,5%</td><td class="num">68,5%</td><td class="num">14,4%</td></tr>
+      <tr><td>60+ anos</td><td class="num">24,2%</td><td class="num">79,7%</td><td class="num">10,5%</td></tr>
+    </tbody>
+  </table>
+  <div class="insight">
+    <div class="insight-label">O que esta tabela nos diz</div>
+    Três padrões chamam atenção aqui. Primeiro: as <strong>crianças (0–17)</strong> ficaram mais em casa (83,4%), mas fizeram pouquíssimos testes (4,6%) — o que significa que casos infantis podem ter passado completamente despercebidos. Segundo: os <strong>adultos de 30–44 anos</strong> foram os que mais buscaram atendimento e mais se testaram, provavelmente porque são a faixa com maior acesso a planos de saúde e renda. Terceiro: os <strong>idosos</strong>, apesar de serem o grupo clinicamente mais vulnerável, buscaram menos atendimento (24,2%) — possivelmente por dificuldade de mobilidade ou medo de contaminação nas unidades de saúde.
+  </div>
+
+  <h3>4.4 Diferenças por sexo</h3>
+  <p>Mulheres destacaram-se pela <strong>maior adoção de trabalho remoto</strong> (71,9% vs. 45,3% dos homens). Homens registraram menor adesão ao isolamento, possivelmente contribuindo para maior exposição ao vírus.</p>
+
+  <h3>4.5 Disparidade diagnóstica regional</h3>
+  <p>As menores taxas de testagem concentraram-se em estados do Nordeste e Sudeste: <strong>PE (8,0%), MG (8,5%), AL (9,3%) e MA (10,0%)</strong> — regiões que também apresentam alta sintomatologia (ver seção 3.5), criando um déficit diagnóstico crítico.</p>
+</section>
+
+<!-- ─── 05 ECONÔMICO ─── -->
+<section id="economico">
+  <div class="section-number">05</div>
+  <h2>Impacto Econômico</h2>
+
+  <h3>5.1 Rendimento efetivo — recuperação gradual</h3>
+  <p>O rendimento médio apresentou <strong>leve recuperação</strong>: R$ 1.652,90 → R$ 1.691,12 (+2,3%), consistente com a reabertura econômica gradual. As disparidades regionais são expressivas: DF (R$ 2.935) vs. MA (R$ 1.090) e BA (R$ 1.115).</p>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-value">R$1.653</div><div class="stat-label">Rendimento Médio</div><div class="stat-sub">Setembro/2020</div></div>
+    <div class="stat-card blue"><div class="stat-value">R$1.672</div><div class="stat-label">Rendimento Médio</div><div class="stat-sub">Outubro/2020</div></div>
+    <div class="stat-card green"><div class="stat-value">R$1.691</div><div class="stat-label">Rendimento Médio</div><div class="stat-sub">Novembro/2020</div></div>
+  </div>
+  <div class="insight">
+    <div class="insight-label">O que estes números nos dizem</div>
+    O rendimento médio subiu pouco mais de R$ 38 em dois meses — uma recuperação modesta, mas consistente com a reabertura econômica gradual daquele período. O número mais importante aqui, porém, é a <strong>enorme disparidade regional</strong>: quem morava no DF recebia quase <strong>o triplo</strong> de quem morava no Maranhão. Isso significa que o mesmo choque econômico da pandemia teve impacto radicalmente diferente dependendo de onde a pessoa vivia — e que políticas uniformes não atendem essa realidade.
+  </div>
+
+  <h3>5.2 Auxílio emergencial — dependência e declínio</h3>
+  <p>O auxílio foi recebido por mais de <strong>50% da população</strong> em setembro, caindo para 48,4% em novembro. A dependência foi maior entre jovens: <strong>59,3% (0–17) e 59,1% (18–29)</strong>. Regionalmente, AP (69,5%), AL (68,2%) e MA (67,1%) lideraram — coincidindo com os estados de menor rendimento.</p>
+
+  <table class="data-table">
+    <thead><tr><th>UF — Maior Dependência de Auxílio</th><th class="num">% Auxílio</th><th>UF — Maior Rendimento</th><th class="num">Renda Média</th></tr></thead>
+    <tbody>
+      <tr><td>AP (Amapá)</td><td class="num up">69,5%</td><td>DF (Distrito Federal)</td><td class="num highlight">R$ 2.935</td></tr>
+      <tr><td>AL (Alagoas)</td><td class="num up">68,2%</td><td>RJ (Rio de Janeiro)</td><td class="num">R$ 2.138</td></tr>
+      <tr><td>MA (Maranhão)</td><td class="num up">67,1%</td><td>SP (São Paulo)</td><td class="num">R$ 2.104</td></tr>
+      <tr><td>PA (Pará)</td><td class="num up">66,4%</td><td>RS (Rio Grande do Sul)</td><td class="num">R$ 2.069</td></tr>
+      <tr><td>BA (Bahia)</td><td class="num up">64,2%</td><td>PR (Paraná)</td><td class="num">R$ 2.007</td></tr>
+    </tbody>
+  </table>
+  <div class="insight">
+    <div class="insight-label">O que esta tabela nos diz</div>
+    Os estados com <strong>maior dependência do auxílio emergencial</strong> (AP, AL, MA, PA, BA) são exatamente os mesmos que aparecem com <strong>menores rendimentos médios</strong> — e, como veremos na Seção 6, também com maior sintomatologia e menor testagem. Isso não é coincidência: a pobreza concentrada nessas regiões criou uma barreira estrutural ao isolamento. Quando a pessoa precisa sair para trabalhar para sobreviver, a recomendação de "fique em casa" deixa de ser uma opção real.
+  </div>
+
+  <div class="callout callout-green">A correlação entre <strong>baixo rendimento, alta dependência de auxílio e menor isolamento</strong> indica que restrições econômicas funcionaram como barreira estrutural ao distanciamento social — expondo populações mais pobres a risco de contágio proporcionalmente maior.</div>
+
+  <h3>5.3 Desigualdade de gênero</h3>
+  <p>Homens auferem R$ 1.785 contra R$ 1.567 das mulheres — <strong>diferença de 14%</strong>. Apesar da maior adoção de remoto pelas mulheres (71,9% vs. 45,3%), a brecha salarial persiste, indicando que a pandemia não neutralizou desigualdades estruturais preexistentes.</p>
+</section>
+
+<!-- ─── 06 VULNERABILIDADE ─── -->
+<section id="vulnerabilidade">
+  <div class="section-number">06</div>
+  <h2>Grupos Vulneráveis e Diferenças Regionais</h2>
+  <p>A síntese dos três eixos analisados permite identificar os perfis de maior vulnerabilidade combinada, organizados abaixo por dimensão de risco.</p>
+
+  <div class="vuln-grid">
+    <div class="vuln-card">
+      <div class="vuln-header clinical">Vulnerabilidade Clínica</div>
+      <div class="vuln-group"><div class="vuln-label">Grupo prioritário</div><div class="vuln-value">Idosos (60+): maior tosse (1,58%) e dispneia (0,53%)</div></div>
+      <div class="vuln-group"><div class="vuln-label">Segundo grupo</div><div class="vuln-value">Mulheres: incidência superior em todos os sintomas</div></div>
+      <div class="vuln-group"><div class="vuln-label">Indicador de alerta</div><div class="vuln-value">Perda olfato/paladar mais alta em adultos 30–44 anos</div></div>
+    </div>
+    <div class="vuln-card">
+      <div class="vuln-header behavior">Vulnerabilidade Comportamental</div>
+      <div class="vuln-group"><div class="vuln-label">Menor isolamento</div><div class="vuln-value">Adultos 18–44 anos (66–69% ficaram em casa)</div></div>
+      <div class="vuln-group"><div class="vuln-label">Menor testagem</div><div class="vuln-value">PE, MG, AL, MA (abaixo de 10%)</div></div>
+      <div class="vuln-group"><div class="vuln-label">Retomada presencial</div><div class="vuln-value">Trabalho remoto caiu 60,8% → 58,2% no trimestre</div></div>
+    </div>
+    <div class="vuln-card">
+      <div class="vuln-header economic">Vulnerabilidade Socioeconômica</div>
+      <div class="vuln-group"><div class="vuln-label">Maior dependência</div><div class="vuln-value">0–29 anos: +59% recebiam auxílio emergencial</div></div>
+      <div class="vuln-group"><div class="vuln-label">Regiões críticas</div><div class="vuln-value">AP, AL, MA, PA, BA: baixa renda + alta dependência</div></div>
+      <div class="vuln-group"><div class="vuln-label">Brecha de gênero</div><div class="vuln-value">Mulheres recebem 14% menos que homens</div></div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <div class="insight-label">O que esta matriz nos diz</div>
+    Esta tabela resume as três dimensões de risco em paralelo. O ponto central é que <strong>vulnerabilidade não é uma coisa só</strong>: um idoso do interior do Amapá enfrenta risco clínico (sintomas graves), risco comportamental (dificuldade de acesso a testes e atendimento) e risco econômico (baixa renda, dependência de auxílio) ao mesmo tempo. Políticas que tratam apenas uma dessas dimensões isoladamente tendem a ser insuficientes. Um hospital que se prepara apenas para o pico de casos, sem considerar quem consegue chegar até ele e em que condição econômica, estará subpreparado para a realidade do próximo surto.
+  </div>
+  <div class="callout"><strong>Perfil de maior vulnerabilidade sistêmica:</strong> AP, AM, PA, MA e AL combinam alta sintomatologia, baixa testagem, baixo rendimento e alta dependência de auxílio — tornando-se territórios prioritários para qualquer estratégia de resposta federalizada.</div>
+</section>
+
+<div class="section-break"><span>Conclusão</span></div>
+
+<!-- ─── 07 RECOMENDAÇÕES ─── -->
+<section id="recomendacoes">
+  <div class="section-number">07</div>
+  <h2>Recomendações para o Hospital em Caso de Novo Surto</h2>
+  <p>Com base nos padrões identificados nas seções anteriores, apresentam-se oito recomendações estratégicas para o planejamento hospitalar.</p>
+
+  <div class="rec-grid">
+    <div class="rec-card"><div class="rec-num">01</div><div class="rec-title">Triagem Prioritária para Idosos</div><div class="rec-body">Protocolos de triagem expedita para pacientes acima de 60 anos, dado o perfil de maior gravidade clínica. Ampliar leitos de observação e UTI com antecipação.</div></div>
+    <div class="rec-card"><div class="rec-num">02</div><div class="rec-title">Perda de Olfato como Marcador Precoce</div><div class="rec-body">Incorporar triagem de perda de olfato/paladar na admissão e teleconsulta como sinal precoce de COVID-19 — especialmente em adultos de 30–44 anos.</div></div>
+    <div class="rec-card"><div class="rec-num">03</div><div class="rec-title">Expansão da Testagem</div><div class="rec-body">Ampliar cobertura diagnóstica com testes rápidos (hoje abaixo de 13%). Priorizar PE, MG, AL e MA via parcerias com a rede pública para reduzir subnotificação.</div></div>
+    <div class="rec-card"><div class="rec-num">04</div><div class="rec-title">Planejamento contra Sazonalidade</div><div class="rec-body">O padrão em "V" indica que reduções temporárias não significam fim do surto. Manter reserva estratégica de EPIs, ventiladores e leitos mesmo em períodos de aparente arrefecimento.</div></div>
+    <div class="rec-card"><div class="rec-num">05</div><div class="rec-title">Comunicação Segmentada por Perfil</div><div class="rec-body">Para adultos de 18–44 anos: enfatizar risco de transmissão. Para populações de baixa renda: destacar gratuidade de testes e atendimento, removendo barreiras econômicas.</div></div>
+    <div class="rec-card"><div class="rec-num">06</div><div class="rec-title">Dimensionamento com Perspectiva de Gênero</div><div class="rec-body">Mulheres apresentaram maior incidência e maior uso de serviços. Dimensionar equipes e horários considerando essa maior demanda, especialmente em ambulatórios e UPAs.</div></div>
+    <div class="rec-card"><div class="rec-num">07</div><div class="rec-title">Telemedicina para Desafogar Unidades</div><div class="rec-body">Com busca por atendimento crescendo até 29%, ampliar triagem por teleconsulta. Direcionar casos leves para acompanhamento domiciliar, reservando leitos para casos graves.</div></div>
+    <div class="rec-card"><div class="rec-num">08</div><div class="rec-title">Prioridade para Norte e Nordeste</div><div class="rec-body">AP, AM, PA, MA e AL concentram vulnerabilidade sistêmica. Qualquer estratégia federalizada de resposta deve priorizar esses territórios com recursos diagnósticos e assistenciais.</div></div>
+  </div>
+</section>
+
+<!-- ─── 08 CONCLUSÕES ─── -->
+<section id="conclusoes">
+  <div class="section-number">08</div>
+  <h2>Conclusões</h2>
+  <p>A análise da PNAD-COVID-19 para o trimestre setembro–novembro de 2020 evidencia que a pandemia no Brasil apresentou dinâmica heterogênea, com <strong>diferenças significativas entre regiões, faixas etárias, sexos e estratos econômicos</strong>. Os dados confirmam que idosos foram o grupo de maior vulnerabilidade clínica, enquanto adultos jovens em situação econômica precária enfrentaram as maiores barreiras ao isolamento e à testagem.</p>
+  <p>O padrão temporal em "V" — redução em outubro, retomada em novembro — serve como alerta para que gestores hospitalares não interpretem oscilações de curto prazo como tendências definitivas. A <strong>resiliência do sistema de saúde</strong> depende de planejamento contínuo, não reativo.</p>
+  <p>A correlação entre baixo rendimento, maior dependência de auxílio e menor adesão ao isolamento revela que intervenções de saúde pública precisam ser acompanhadas de <strong>políticas de suporte econômico</strong>. Sem essa articulação, a pressão financeira doméstica sobrepõe-se às recomendações sanitárias para parcelas expressivas da população.</p>
+  <div class="callout callout-green"><strong>Síntese executiva:</strong> Um hospital preparado para novo surto deve priorizar idosos clinicamente, expandir testagem regionalmente, fortalecer triagem remota operacionalmente e tratar as desigualdades socioeconômicas como variável estruturante — não periférica — do planejamento assistencial.</div>
+</section>
+
+<hr class="rule">
+
+<!-- ─── APÊNDICE A · SQL ─── -->
+<section id="apendice-sql">
+  <div class="appendix-header">
+    <span class="appendix-tag">Apêndice A</span>
+    <span class="appendix-title-text">Referência SQL — Queries do Projeto</span>
+  </div>
+
+  <p>As consultas abaixo documentam o processo completo de organização e análise dos dados no BigQuery, na ordem em que foram executadas. Os botões <strong>"Abrir no Console"</strong> direcionam ao BigQuery Console com o projeto pré-selecionado — qualquer conta Google com acesso de <em>visualizador</em> ao dataset consegue ver os resultados.</p>
+
+  <div class="bq-badge">
+    <span class="bq-dot"></span>
+    Projeto: <code>tech-challenge-491720</code>
+    &nbsp;·&nbsp; Dataset: <code>[DATASET]</code>
+    &nbsp;·&nbsp;
+    <a class="bq-link" href="https://console.cloud.google.com/bigquery?project=tech-challenge-491720" target="_blank" rel="noopener">↗ Abrir projeto no Console</a>
+  </div>
+
+  <div class="sql-card">
+    <div class="sql-header">
+      <div class="sql-meta"><span class="sql-num">01</span><div><div class="sql-title">Validação de Esquema — Comparação entre Meses</div><div class="sql-desc">Verifica compatibilidade estrutural das três tabelas brutas antes da consolidação</div></div></div>
+      <div class="sql-actions"><button class="btn-copy" onclick="copySQL(this)">Copiar</button><a class="btn-bq" href="https://console.cloud.google.com/bigquery?project=tech-challenge-491720" target="_blank" rel="noopener">↗ Abrir no Console</a></div>
+    </div>
+    <pre class="sql-code"><code><span class="kw">SELECT</span>
+  table_name, column_name, data_type,
+  is_nullable, ordinal_position
+<span class="kw">FROM</span>
+  <span class="tbl">`tech-challenge-491720.[DATASET].INFORMATION_SCHEMA.COLUMNS`</span>
+<span class="kw">WHERE</span>
+  table_name <span class="kw">IN</span> (
+    <span class="str">'pnad_raw_2020_09'</span>, <span class="str">'pnad_raw_2020_10'</span>, <span class="str">'pnad_raw_2020_11'</span>
+  )
+<span class="kw">ORDER BY</span> table_name, ordinal_position;</code></pre>
+  </div>
+
+  <div class="sql-card">
+    <div class="sql-header">
+      <div class="sql-meta"><span class="sql-num">02</span><div><div class="sql-title">Documentação de Variáveis — Tabela Auxiliar</div><div class="sql-desc">Cria <code>variaveis_projeto</code> com rastreabilidade metodológica de cada campo</div></div></div>
+      <div class="sql-actions"><button class="btn-copy" onclick="copySQL(this)">Copiar</button><a class="btn-bq" href="https://console.cloud.google.com/bigquery?project=tech-challenge-491720" target="_blank" rel="noopener">↗ Abrir no Console</a></div>
+    </div>
+    <pre class="sql-code"><code><span class="kw">CREATE OR REPLACE TABLE</span> <span class="tbl">`tech-challenge-491720.[DATASET].variaveis_projeto`</span> <span class="kw">AS</span>
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> (
+  <span class="kw">VALUES</span>
+    (<span class="str">'mes_referencia'</span>, <span class="str">'Perfil'</span>,        <span class="str">'Mês de referência da pesquisa'</span>),
+    (<span class="str">'uf'</span>,            <span class="str">'Perfil'</span>,        <span class="str">'Unidade Federativa (código IBGE)'</span>),
+    (<span class="str">'idade'</span>,         <span class="str">'Perfil'</span>,        <span class="str">'Idade do entrevistado'</span>),
+    (<span class="str">'sexo'</span>,          <span class="str">'Perfil'</span>,        <span class="str">'Sexo do entrevistado'</span>),
+    (<span class="str">'febre'</span>,         <span class="str">'Sintoma'</span>,       <span class="str">'Teve febre na semana de referência'</span>),
+    (<span class="str">'tosse'</span>,         <span class="str">'Sintoma'</span>,       <span class="str">'Teve tosse na semana de referência'</span>),
+    (<span class="str">'dor_garganta'</span>,  <span class="str">'Sintoma'</span>,       <span class="str">'Teve dor de garganta'</span>),
+    (<span class="str">'dificuldade_respirar'</span>, <span class="str">'Sintoma'</span>, <span class="str">'Teve dificuldade para respirar'</span>),
+    (<span class="str">'dor_cabeca'</span>,    <span class="str">'Sintoma'</span>,       <span class="str">'Teve dor de cabeça'</span>),
+    (<span class="str">'perda_cheiro_sabor'</span>, <span class="str">'Sintoma'</span>,  <span class="str">'Perdeu olfato ou paladar'</span>),
+    (<span class="str">'buscou_atendimento'</span>, <span class="str">'Comportamento'</span>, <span class="str">'Buscou atendimento de saúde'</span>),
+    (<span class="str">'ficou_em_casa'</span>, <span class="str">'Comportamento'</span>, <span class="str">'Ficou em casa na semana'</span>),
+    (<span class="str">'fez_teste'</span>,     <span class="str">'Comportamento'</span>, <span class="str">'Realizou teste para COVID-19'</span>),
+    (<span class="str">'plano_saude'</span>,   <span class="str">'Comportamento'</span>, <span class="str">'Possui plano de saúde privado'</span>),
+    (<span class="str">'trabalho_remoto'</span>,<span class="str">'Comportamento'</span>, <span class="str">'Realizou trabalho remoto'</span>),
+    (<span class="str">'rendimento_efetivo'</span>, <span class="str">'Economia'</span>,   <span class="str">'Rendimento efetivo do trabalho'</span>),
+    (<span class="str">'auxilio_emergencial'</span>, <span class="str">'Economia'</span>,  <span class="str">'Recebeu auxílio emergencial'</span>)
+) <span class="kw">AS</span> t(alias, bloco_tematico, descricao);</code></pre>
+  </div>
+
+  <div class="sql-card">
+    <div class="sql-header">
+      <div class="sql-meta"><span class="sql-num">03</span><div><div class="sql-title">Consolidação Final — Tabela Analítica</div><div class="sql-desc">UNION ALL controlado com <code>SAFE_CAST</code>, aliases e coluna <code>mes_referencia</code></div></div></div>
+      <div class="sql-actions"><button class="btn-copy" onclick="copySQL(this)">Copiar</button><a class="btn-bq" href="https://console.cloud.google.com/bigquery?project=tech-challenge-491720" target="_blank" rel="noopener">↗ Abrir no Console</a></div>
+    </div>
+    <pre class="sql-code"><code><span class="kw">CREATE OR REPLACE TABLE</span> <span class="tbl">`tech-challenge-491720.[DATASET].pnad_tratada_final`</span> <span class="kw">AS</span>
+
+<span class="kw">SELECT</span> <span class="str">'2020-09'</span> <span class="kw">AS</span> mes_referencia, V1023 <span class="kw">AS</span> uf, A002 <span class="kw">AS</span> idade, A003 <span class="kw">AS</span> sexo,
+  B0011 <span class="kw">AS</span> febre, B0012 <span class="kw">AS</span> tosse, B0013 <span class="kw">AS</span> dor_garganta,
+  B0014 <span class="kw">AS</span> dificuldade_respirar, B0015 <span class="kw">AS</span> dor_cabeca, B00111 <span class="kw">AS</span> perda_cheiro_sabor,
+  B002 <span class="kw">AS</span> buscou_atendimento, B006 <span class="kw">AS</span> ficou_em_casa, B009B <span class="kw">AS</span> fez_teste,
+  I001 <span class="kw">AS</span> plano_saude, C013 <span class="kw">AS</span> trabalho_remoto,
+  <span class="fn">SAFE_CAST</span>(C01012 <span class="kw">AS</span> FLOAT64) <span class="kw">AS</span> rendimento_efetivo, D0051 <span class="kw">AS</span> auxilio_emergencial
+<span class="kw">FROM</span> <span class="tbl">`tech-challenge-491720.[DATASET].pnad_raw_2020_09`</span>
+
+<span class="kw">UNION ALL</span>
+
+<span class="kw">SELECT</span> <span class="str">'2020-10'</span>, V1023, A002, A003, B0011, B0012, B0013, B0014, B0015, B00111,
+  B002, B006, B009B, I001, C013, <span class="fn">SAFE_CAST</span>(C01012 <span class="kw">AS</span> FLOAT64), D0051
+<span class="kw">FROM</span> <span class="tbl">`tech-challenge-491720.[DATASET].pnad_raw_2020_10`</span>
+
+<span class="kw">UNION ALL</span>
+
+<span class="kw">SELECT</span> <span class="str">'2020-11'</span>, V1023, A002, A003, B0011, B0012, B0013, B0014, B0015, B00111,
+  B002, B006, B009B, I001, C013, <span class="fn">SAFE_CAST</span>(C01012 <span class="kw">AS</span> FLOAT64), D0051
+<span class="kw">FROM</span> <span class="tbl">`tech-challenge-491720.[DATASET].pnad_raw_2020_11`</span>;</code></pre>
+  </div>
+
+  <div class="sql-card">
+    <div class="sql-header">
+      <div class="sql-meta"><span class="sql-num">04</span><div><div class="sql-title">Query Analítica — Geração dos Indicadores Finais</div><div class="sql-desc">Agrega por mês, UF, faixa etária e sexo — produz todos os percentuais e médias usados neste relatório</div></div></div>
+      <div class="sql-actions"><button class="btn-copy" onclick="copySQL(this)">Copiar</button><a class="btn-bq" href="https://console.cloud.google.com/bigquery?project=tech-challenge-491720" target="_blank" rel="noopener">↗ Abrir no Console</a></div>
+    </div>
+    <pre class="sql-code"><code><span class="kw">SELECT</span>
+  mes_referencia, uf,
+  <span class="kw">CASE</span>
+    <span class="kw">WHEN</span> <span class="fn">SAFE_CAST</span>(idade <span class="kw">AS</span> INT64) <span class="kw">BETWEEN</span> 0  <span class="kw">AND</span> 17 <span class="kw">THEN</span> <span class="str">'0-17'</span>
+    <span class="kw">WHEN</span> <span class="fn">SAFE_CAST</span>(idade <span class="kw">AS</span> INT64) <span class="kw">BETWEEN</span> 18 <span class="kw">AND</span> 29 <span class="kw">THEN</span> <span class="str">'18-29'</span>
+    <span class="kw">WHEN</span> <span class="fn">SAFE_CAST</span>(idade <span class="kw">AS</span> INT64) <span class="kw">BETWEEN</span> 30 <span class="kw">AND</span> 44 <span class="kw">THEN</span> <span class="str">'30-44'</span>
+    <span class="kw">WHEN</span> <span class="fn">SAFE_CAST</span>(idade <span class="kw">AS</span> INT64) <span class="kw">BETWEEN</span> 45 <span class="kw">AND</span> 59 <span class="kw">THEN</span> <span class="str">'45-59'</span>
+    <span class="kw">ELSE</span> <span class="str">'60+'</span>
+  <span class="kw">END AS</span> faixa_etaria,
+  <span class="kw">CASE WHEN</span> sexo = <span class="str">'1'</span> <span class="kw">THEN</span> <span class="str">'Homem'</span> <span class="kw">ELSE</span> <span class="str">'Mulher'</span> <span class="kw">END AS</span> sexo_desc,
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total_pessoas,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(febre=<span class="str">'1'</span>,1,0))*100,2)                <span class="kw">AS</span> pct_febre,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(tosse=<span class="str">'1'</span>,1,0))*100,2)                <span class="kw">AS</span> pct_tosse,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(dor_garganta=<span class="str">'1'</span>,1,0))*100,2)        <span class="kw">AS</span> pct_dor_garganta,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(dificuldade_respirar=<span class="str">'1'</span>,1,0))*100,2) <span class="kw">AS</span> pct_dificuldade_respirar,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(dor_cabeca=<span class="str">'1'</span>,1,0))*100,2)           <span class="kw">AS</span> pct_dor_cabeca,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(perda_cheiro_sabor=<span class="str">'1'</span>,1,0))*100,2)   <span class="kw">AS</span> pct_perda_cheiro_sabor,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(buscou_atendimento=<span class="str">'1'</span>,1,0))*100,2)   <span class="kw">AS</span> pct_buscou_atendimento,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(ficou_em_casa=<span class="str">'1'</span>,1,0))*100,2)        <span class="kw">AS</span> pct_ficou_em_casa,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(plano_saude=<span class="str">'1'</span>,1,0))*100,2)          <span class="kw">AS</span> pct_plano_saude,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(fez_teste=<span class="str">'1'</span>,1,0))*100,2)             <span class="kw">AS</span> pct_fez_teste,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(trabalho_remoto=<span class="str">'1'</span>,1,0))*100,2)     <span class="kw">AS</span> pct_trabalho_remoto,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(<span class="kw">IF</span>(auxilio_emergencial=<span class="str">'1'</span>,1,0))*100,2)  <span class="kw">AS</span> pct_auxilio_emergencial,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(rendimento_efetivo),2)                    <span class="kw">AS</span> media_rendimento_efetivo
+<span class="kw">FROM</span> <span class="tbl">`tech-challenge-491720.[DATASET].pnad_tratada_final`</span>
+<span class="kw">GROUP BY</span> mes_referencia, uf, faixa_etaria, sexo_desc
+<span class="kw">ORDER BY</span> mes_referencia, uf, faixa_etaria, sexo_desc;</code></pre>
+  </div>
+
+
+</section>
+
+<hr class="rule">
+<div class="footer">
+  <div>PNAD-COVID-19 / IBGE · Set–Nov 2020</div>
+  <div>Tech Challenge Fase 03 · Data Analytics · POS TECH</div>
+  <div>Edgard Kiriyama &amp; Matheus Pavani</div>
+</div>
+
+<script>
+function copySQL(btn) {
+  const code = btn.closest('.sql-card').querySelector('.sql-code').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copiado ✓'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copiar'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>

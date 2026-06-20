@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Previsão de Tendência — IBOVESPA · Tech Challenge Fase 2</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+  :root {
+    --bg: #0D1117;
+    --surface: #161B22;
+    --surface2: #21262D;
+    --border: #30363D;
+    --text: #E6EDF3;
+    --text2: #8B949E;
+    --accent: #58A6FF;
+    --green: #3FB950;
+    --amber: #D29922;
+    --red: #F85149;
+    --purple: #BC8CFF;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  .site-header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,17,23,0.96);
+    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(8px);
+    padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 62px; gap: 16px;
+  }
+  .header-left h1 { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+  .header-left .meta { font-size: 12px; color: var(--text2); margin-top: 1px; }
+  .header-badge {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+    padding: 5px 12px; font-size: 12px; color: var(--text2); white-space: nowrap; flex-shrink: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 0 24px; display: flex; gap: 0; overflow-x: auto; scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+  nav a {
+    color: var(--text2); text-decoration: none; font-size: 13px; font-weight: 500;
+    padding: 12px 16px; border-bottom: 2px solid transparent; white-space: nowrap;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  nav a:hover { color: var(--text); border-bottom-color: var(--border); }
+  nav a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── LAYOUT ── */
+  main { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; }
+  section { margin-bottom: 60px; scroll-margin-top: 72px; }
+  .sec-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 6px; letter-spacing: -0.02em; }
+  .sec-sub { font-size: 13px; color: var(--text2); margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 14px; }
+
+  /* ── CTX BOX ── */
+  .ctx-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; margin-bottom: 28px; }
+  .ctx-box h3 { font-size: 15px; font-weight: 700; color: var(--accent); margin-bottom: 14px; }
+  .ctx-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .ctx-pill { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 4px 14px; font-size: 13px; color: var(--text); font-weight: 500; }
+  .ctx-box p { font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; text-align: center; }
+  .kpi-val { font-size: 28px; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; line-height: 1.1; }
+  .kpi-val.c-green { color: var(--green); }
+  .kpi-val.c-amber { color: var(--amber); }
+  .kpi-val.c-red { color: var(--red); }
+  .kpi-label { font-size: 13px; color: var(--text); font-weight: 600; margin-top: 6px; }
+  .kpi-sub { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+  /* ── INSIGHT BOX ── */
+  .ibox {
+    background: var(--surface2); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0;
+    padding: 14px 18px; font-size: 13.5px; color: var(--text2); line-height: 1.65; margin-top: 14px;
+  }
+  .ibox.i-amber { border-left-color: var(--amber); }
+  .ibox.i-green { border-left-color: var(--green); }
+  .ibox.i-red { border-left-color: var(--red); }
+  .ibox.i-purple { border-left-color: var(--purple); }
+  .ibox strong { color: var(--text); }
+
+  /* ── CHART CARD ── */
+  .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 20px 14px; margin-top: 16px; }
+  .chart-title { font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .chart-note { font-size: 13px; color: var(--text2); line-height: 1.65; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .chart-note strong { color: var(--text); }
+
+  /* ── TWO COL ── */
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  @media (max-width: 700px) { .g2 { grid-template-columns: 1fr; } }
+
+  /* ── PIPELINE ── */
+  .pipeline-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 700px) { .pipeline-grid { grid-template-columns: 1fr; } }
+  .pipe-step {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 18px;
+  }
+  .pipe-num { font-size: 32px; font-weight: 900; color: var(--accent); line-height: 1; margin-bottom: 8px; }
+  .pipe-icon-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .pipe-body { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+  /* ── INDICATOR GRID ── */
+  .ind-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  @media (max-width: 700px) { .ind-grid { grid-template-columns: 1fr; } }
+  .ind-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 18px 20px;
+  }
+  .ind-card.b-green { border-left-color: var(--green); }
+  .ind-card.b-purple { border-left-color: var(--purple); }
+  .ind-card.b-amber { border-left-color: var(--amber); }
+  .ind-card.b-red { border-left-color: var(--red); }
+  .ind-card.b-text2 { border-left-color: var(--text2); }
+  .ind-card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .ind-card-body { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+  /* ── SPLIT VISUAL ── */
+  .split-visual {
+    display: flex; align-items: stretch; gap: 0;
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    margin-top: 16px;
+  }
+  .split-train, .split-test {
+    flex: 1; padding: 22px 24px;
+    background: var(--surface);
+  }
+  .split-train { border-right: 2px solid var(--border); }
+  .split-divider {
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 12px; background: var(--surface2); color: var(--text2); font-size: 22px;
+  }
+  .split-badge {
+    display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; padding: 3px 10px; border-radius: 4px; margin-bottom: 10px;
+  }
+  .split-badge.sb-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .split-badge.sb-amber { background: rgba(210,153,34,0.15); color: var(--amber); }
+  .split-num { font-size: 30px; font-weight: 800; color: var(--text); letter-spacing: -0.03em; margin-bottom: 4px; }
+  .split-period { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+  .split-stat { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
+  .split-stat strong { color: var(--text); }
+  .split-warning { font-size: 12px; color: var(--amber); margin-top: 8px; }
+
+  /* ── STRATEGY CARDS ── */
+  .strategy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 700px) { .strategy-grid { grid-template-columns: 1fr; } }
+  .strat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 22px; border-top: 3px solid var(--accent); }
+  .strat-card.t-amber { border-top-color: var(--amber); }
+  .strat-card.t-green { border-top-color: var(--green); }
+  .strat-card.t-blue  { border-top-color: var(--accent); }
+  .strat-card h4 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+  .strat-card p { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+  /* ── WHY LABEL ── */
+  .why-label {
+    display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--purple); background: rgba(188,140,255,0.1);
+    border: 1px solid rgba(188,140,255,0.25); border-radius: 4px; padding: 2px 8px;
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-left">
+    <h1>Previsão de Tendência — IBOVESPA · Tech Challenge Fase 2</h1>
+    <div class="meta">Leonardo Fernandes Sbardelotto · RM 368591 · POS TECH Data Analytics</div>
+  </div>
+  <div class="header-badge">Jan 2020 – Jan 2026 · Investing.com</div>
+</header>
+
+<!-- NAV -->
+<nav>
+  <a href="#resumo" class="active">Resumo</a>
+  <a href="#funciona">Como Funciona</a>
+  <a href="#dados">Os Dados</a>
+  <a href="#indicadores">Os Indicadores</a>
+  <a href="#dataset">Dataset + Split</a>
+  <a href="#modelos">Os Modelos</a>
+  <a href="#resultado">Resultado</a>
+  <a href="#conclusoes">Conclusões</a>
+</nav>
+
+<main>
+
+<!-- ══ RESUMO ══ -->
+<section id="resumo">
+  <div class="ctx-box">
+    <h3>O que você precisa saber antes de ler este relatório</h3>
+    <div class="ctx-pills">
+      <span class="ctx-pill">📈 Prever alta ou baixa</span>
+      <span class="ctx-pill">🤖 4 modelos testados</span>
+      <span class="ctx-pill">📅 30 dias de teste real</span>
+      <span class="ctx-pill">⚖️ Acurácia balanceada como métrica</span>
+    </div>
+    <p>O desafio desta fase foi usar Machine Learning para prever se o IBOVESPA — o principal índice da bolsa de valores brasileira — vai subir ou cair no dia seguinte. Baixamos o histórico diário de janeiro de 2020 a janeiro de 2026, criamos 32 indicadores técnicos a partir dos preços e testamos 4 algoritmos de Machine Learning. O objetivo do curso era atingir pelo menos 75% de acurácia. Neste relatório explicamos por que esse critério é particularmente difícil, por que a acurácia comum pode enganar, e qual modelo se saiu melhor quando usamos a métrica certa.</p>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-val">1.501</div>
+      <div class="kpi-label">dias de série histórica</div>
+      <div class="kpi-sub">Jan 2020 → Jan 2026</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val">32</div>
+      <div class="kpi-label">indicadores criados</div>
+      <div class="kpi-sub">médias, momentum, volatilidade</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val">4</div>
+      <div class="kpi-label">modelos testados</div>
+      <div class="kpi-sub">comparados por BalAcc</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val c-green">60%</div>
+      <div class="kpi-label">HistGB — Acc e BalAcc</div>
+      <div class="kpi-sub">único a separar Alta e Baixa</div>
+    </div>
+  </div>
+
+  <div class="ibox i-amber">
+    <strong>O paradoxo do baseline:</strong> uma estratégia ingênua de "prever Alta sempre" acertaria 66,7% dos 30 dias de teste — número maior do que o da maioria dos modelos. Mas isso não significa que o baseline é bom: ele acerta Alta por acidente (o período de teste teve mais dias de alta) e nunca acerta Baixa. O melhor modelo (HistGB) atingiu 60% de acurácia E 60% de acurácia balanceada — acertando ambos os lados com consistência. Explico tudo isso ao longo do relatório.
+  </div>
+</section>
+
+<!-- ══ 1. COMO FUNCIONA ══ -->
+<section id="funciona">
+  <div class="sec-title">1. Como o Notebook Funciona — Passo a Passo</div>
+  <div class="sec-sub">O roteiro completo do projeto: do CSV bruto ao modelo avaliado · 6 etapas principais</div>
+
+  <div class="why-label">Por que começar aqui?</div>
+  <p style="font-size:13.5px; color:var(--text2); line-height:1.7; margin-bottom:20px;">
+    Antes de ver os gráficos e resultados, é útil entender o caminho percorrido. Cada seção deste relatório corresponde a uma dessas etapas — assim você vai acompanhar não só o que foi encontrado, mas por que cada análise foi feita nessa ordem.
+  </p>
+
+  <div class="pipeline-grid">
+    <div class="pipe-step">
+      <div class="pipe-num">1</div>
+      <div class="pipe-icon-title">🔽 Baixar e limpar os dados</div>
+      <div class="pipe-body">Baixamos o histórico diário do IBOVESPA (preço de abertura, fechamento, máxima, mínima e volume) do Investing.com. O arquivo vinha em formato brasileiro — convertemos separadores, removemos datas inválidas e ordenamos a série cronologicamente.</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">2</div>
+      <div class="pipe-icon-title">🔬 Explorar os dados (EDA)</div>
+      <div class="pipe-body">Antes de treinar qualquer modelo, analisamos a série: como o IBOVESPA se comportou de 2020 a 2026, e qual a distribuição dos retornos diários. Essa etapa revela o principal desafio: o sinal diário é muito ruidoso, concentrado perto de 0.</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">3</div>
+      <div class="pipe-icon-title">🔧 Criar os 32 indicadores</div>
+      <div class="pipe-body">A partir dos preços brutos, calculamos 32 indicadores técnicos — médias móveis, MACD, RSI, Bollinger, lags de retorno e dia da semana. Nenhum indicador usa dados do futuro: tudo é calculado só com o que estava disponível até aquele dia.</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">4</div>
+      <div class="pipe-icon-title">✂️ Separar treino e teste</div>
+      <div class="pipe-body">Os últimos 30 pregões (21/11/2025–07/01/2026) foram reservados como "prova final" — o modelo nunca os viu durante o treinamento. Todo o histórico anterior foi usado para treinar. A separação é cronológica, não aleatória.</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">5</div>
+      <div class="pipe-icon-title">🤖 Treinar e comparar modelos</div>
+      <div class="pipe-body">4 algoritmos foram treinados com validação cruzada cronológica (TimeSeriesSplit em 5 blocos). Essa técnica simula o que aconteceria se o modelo fosse usado no mundo real, aprendendo no passado e sendo testado no futuro.</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-num">6</div>
+      <div class="pipe-icon-title">📊 Avaliar com a métrica certa</div>
+      <div class="pipe-body">Usamos Acurácia Balanceada (BalAcc) — não a acurácia comum — para comparar os modelos. BalAcc mede o quão bem o modelo acerta tanto Alta quanto Baixa, evitando que um modelo que "chuta tudo Alta" pareça bom só porque o período teve mais altas.</div>
+    </div>
+  </div>
+
+  <div class="ibox i-purple">
+    <strong>Por que TimeSeriesSplit e não validação aleatória?</strong> Em séries temporais, baralhar as datas causaria "vazamento de futuro": o modelo treinaria em dados de 2024 e seria testado em dados de 2022, fingindo que conhece o futuro. O TimeSeriesSplit respeita a ordem cronológica — cada bloco de validação está sempre no futuro em relação ao treino, simulando o uso real.
+  </div>
+</section>
+
+<!-- ══ 2. OS DADOS ══ -->
+<section id="dados">
+  <div class="sec-title">2. Explorando os Dados — IBOVESPA 2020–2026</div>
+  <div class="sec-sub">Etapa 1 do notebook · Entender o comportamento da série antes de prever</div>
+
+  <div class="why-label">Por que explorar antes de modelar?</div>
+  <p style="font-size:13.5px; color:var(--text2); line-height:1.7; margin-bottom:16px;">
+    A Análise Exploratória (EDA) revela o principal obstáculo do problema antes de qualquer modelo entrar em cena. Aqui descobrimos duas coisas fundamentais: (1) o IBOVESPA passa por regimes muito diferentes ao longo do tempo (crash COVID, recuperação, inflação, rali de 2025) e (2) a grande maioria dos retornos diários fica concentrada perto de 0% — o que torna a classificação Alta/Baixa inerentemente difícil.
+  </p>
+
+  <div class="g2">
+    <div class="chart-card" style="margin-top:0;">
+      <div class="chart-title">Série temporal — IBOVESPA (×1.000 pts) · Treino: azul · Teste: âmbar</div>
+      <div id="chart-ibov" style="height:260px;"></div>
+      <div class="chart-note">
+        A linha tracejada vertical marca o início da janela de teste (nov 2025). O crash de COVID (mar 2020) aparece claramente — o IBOVESPA caiu ~47% em semanas. A recuperação em V e os regimes subsequentes mostram que o mercado muda muito de caráter ao longo do tempo, dificultando que um modelo treinado num período funcione bem em outro.
+      </div>
+    </div>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="chart-title">Distribuição de retornos diários (pct_change) · 1.500 pregões</div>
+      <div id="chart-retornos" style="height:260px;"></div>
+      <div class="chart-note">
+        <strong>O principal insight:</strong> a esmagadora maioria dos dias tem variação próxima de 0%. Mediana ≈ +0,05%; p5 ≈ −2,1%; p95 ≈ +2,1%. Separar "Alta" de "Baixa" nessa distribuição é como distinguir cara de coroa quando a moeda cai em pé na maioria das vezes — qualquer ruído externo (notícia de última hora, evento macro) basta para virar o resultado.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 3. OS INDICADORES ══ -->
+<section id="indicadores">
+  <div class="sec-title">3. Os 32 Indicadores Técnicos</div>
+  <div class="sec-sub">Etapa 2 do notebook · Feature engineering sem vazamento de futuro</div>
+
+  <div class="why-label">Para que servem esses 32 indicadores?</div>
+  <p style="font-size:13.5px; color:var(--text2); line-height:1.7; margin-bottom:20px;">
+    O preço bruto de fechamento não diz muito sozinho. Os indicadores transformam esse número em sinais interpretáveis: "o mercado está acelerando ou freando?", "o preço está esticado acima da média histórica?", "o dia de ontem foi de convicção ou indecisão?". São esses sinais — não o preço em si — que os modelos usam para tentar prever se amanhã será Alta ou Baixa. A regra mais importante: <strong style="color:var(--text);">nenhum indicador usa informação do futuro</strong> — tudo é calculado com dados disponíveis até o dia corrente.
+  </p>
+
+  <div class="ind-grid">
+    <div class="ind-card">
+      <div class="ind-card-title">📊 Padrão do Candle — 3 indicadores</div>
+      <div class="ind-card-body">Analisam a "forma" de cada dia: <strong style="color:var(--text);">corpo</strong> (diferença abertura→fechamento = convicção direcional), <strong style="color:var(--text);">amplitude</strong> (máxima−mínima = volatilidade do dia) e <strong style="color:var(--text);">gap de abertura</strong> (quanto o mercado "saltou" da noite para o dia seguinte). Candle com corpo grande = mercado decidido; sombras longas = indecisão.</div>
+    </div>
+    <div class="ind-card b-green">
+      <div class="ind-card-title">📈 Médias Móveis e Razões — 8 indicadores</div>
+      <div class="ind-card-body">Calculam a média dos últimos <strong style="color:var(--text);">5, 10, 20 e 50 dias</strong> de preço. O sinal real não é a média em si, mas a razão Close/SMA−1: quanto o preço atual está <em>acima</em> (força) ou <em>abaixo</em> (fraqueza) da média recente. SMA de 50 dias é a mais importante no modelo — captura a tendência estrutural.</div>
+    </div>
+    <div class="ind-card b-purple">
+      <div class="ind-card-title">⚡ MACD — 3 indicadores</div>
+      <div class="ind-card-body">O MACD compara duas médias exponenciais de curto e longo prazo para medir <strong style="color:var(--text);">aceleração da tendência</strong>. O histograma (MACD − Sinal) mostra se a tendência está ganhando ou perdendo força. O modelo encontrou o MACD entre os indicadores mais importantes — segundo maior peso nos coeficientes.</div>
+    </div>
+    <div class="ind-card b-amber">
+      <div class="ind-card-title">🎚️ Volatilidade e Volume — 4 indicadores</div>
+      <div class="ind-card-body">Desvio padrão dos retornos em janelas de <strong style="color:var(--text);">5, 10, 20 e 50 dias</strong>. Alta volatilidade = mercado nervoso e imprevisível. As Bandas de Bollinger resumem a posição do preço dentro do "envelope" de volatilidade: perto da banda superior sugere força, inferior sugere fraqueza. Volume captura interesse do mercado.</div>
+    </div>
+    <div class="ind-card b-red">
+      <div class="ind-card-title">📉 RSI e Lags de Retorno — 11 indicadores</div>
+      <div class="ind-card-body">O <strong style="color:var(--text);">RSI</strong> (0–100) mede se o mercado está sobrecomprado (&gt;70) ou sobrevendido (&lt;30). Os <strong style="color:var(--text);">lags</strong> (retorno dos últimos 1 a 10 dias) dão "memória" ao modelo para capturar padrões de continuação ou reversão. Na prática, o mercado tem pouquíssima memória de curto prazo — esses sinais são fracos.</div>
+    </div>
+    <div class="ind-card b-text2">
+      <div class="ind-card-title">📅 Dia da Semana — 4 indicadores (dummies)</div>
+      <div class="ind-card-body">Segunda a quinta viram variáveis 0/1 (sexta é o grupo de referência). Alguns estudos mostram efeitos sazonais: segundas tendem a cair (notícias acumuladas no fim de semana) e sextas a subir (fechamento de posições). No nosso modelo, esse efeito foi <strong style="color:var(--text);">marginal</strong> — não aparece no top 15 de features.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 4. DATASET + SPLIT ══ -->
+<section id="dataset">
+  <div class="sec-title">4. O Dataset Final + Divisão Treino/Teste</div>
+  <div class="sec-sub">Etapa 3 do notebook · 1.450 linhas · 32 features · Classes quase equilibradas no treino</div>
+
+  <div class="why-label">Por que isso importa?</div>
+  <p style="font-size:13.5px; color:var(--text2); line-height:1.7; margin-bottom:16px;">
+    Após criar os 32 indicadores, as primeiras 50 linhas são descartadas (os indicadores de 50 dias precisam de histórico para ser calculados). Restam 1.450 dias. Aqui checamos duas coisas críticas: (1) se as classes estão equilibradas — um dataset muito desbalanceado faria o modelo "chutar sempre a classe maior"; (2) se a proporção se mantém na janela de teste — um desvio aí infla artificialmente a acurácia.
+  </p>
+
+  <div class="g2">
+    <div class="chart-card" style="margin-top:0;">
+      <div class="chart-title">Balanceamento das classes — dataset completo (1.450 dias)</div>
+      <div id="chart-balance" style="height:220px;"></div>
+      <div class="chart-note">
+        Classes bem equilibradas: 47,9% Baixa vs 52,1% Alta. Esse balanço é ótimo para o treinamento — o modelo não ganha apenas chutando sempre a maioria. O problema aparece na janela de teste: lá, 66,7% dos dias foram Alta. Um modelo que sempre prevê Alta parece bom (66,7% de acerto) mas é inútil.
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <div class="split-visual">
+        <div class="split-train">
+          <div class="split-badge sb-blue">TREINO</div>
+          <div class="split-num">1.419 dias</div>
+          <div class="split-period">16/03/2020 → 19/11/2025</div>
+          <div class="split-stat">32 features · <strong>Taxa de Alta: 51,7%</strong></div>
+          <div class="split-stat" style="margin-top:6px; font-size:12px;">Classes equilibradas — base sólida para aprendizado</div>
+        </div>
+        <div class="split-divider">→</div>
+        <div class="split-test">
+          <div class="split-badge sb-amber">TESTE</div>
+          <div class="split-num">30 dias</div>
+          <div class="split-period">21/11/2025 → 07/01/2026</div>
+          <div class="split-stat">32 features · <strong style="color:var(--amber);">Taxa de Alta: 66,7%</strong></div>
+          <div class="split-warning">⚠ 20 de 30 dias foram Alta — janela enviesada para cima</div>
+        </div>
+      </div>
+      <div class="ibox i-amber" style="margin-top:12px;">
+        <strong>O desvio de 15 p.p. entre treino e teste é o coração do problema.</strong> O modelo aprendeu que Alta e Baixa aparecem com frequência similar (51,7%). Quando chegou na janela de teste com 66,7% de Altas, sua calibração estava "errada" para o período. Por isso comparamos modelos pela Acurácia Balanceada, não pela acurácia comum.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 5. OS MODELOS ══ -->
+<section id="modelos">
+  <div class="sec-title">5. Comparação dos Modelos + Peso de Features</div>
+  <div class="sec-sub">Etapas 5–8 do notebook · Validação cronológica · Acurácia Balanceada como critério</div>
+
+  <div class="why-label">Por que Acurácia Balanceada e não Acurácia comum?</div>
+  <div class="ibox" style="margin-top:0; margin-bottom:20px;">
+    <strong>Acurácia comum</strong> conta o total de acertos / total de dias. Se o modelo diz "Alta" em todos os 30 dias, acerta 20 (os dias que realmente subiram) = 66,7% — parece ótimo. <strong>Acurácia Balanceada (BalAcc)</strong> calcula a média entre "qual % das Altas foram previstas corretamente" e "qual % das Baixas foram previstas corretamente". O baseline ("sempre Alta") acerta 100% das Altas mas 0% das Baixas → BalAcc = 50% — equivalente a cara ou coroa.
+  </div>
+
+  <div class="g2">
+    <div class="chart-card" style="margin-top:0;">
+      <div class="chart-title">Acc vs Acurácia Balanceada — 30 dias de teste · HistGB vence em ambas as métricas</div>
+      <div id="chart-accbalacc" style="height:300px;"></div>
+      <div class="chart-note">
+        <strong>HistGB é o único modelo que equilibra os dois lados:</strong> Acc = 60% e BalAcc = 60% — acerta Alta e Baixa na mesma proporção. Todos os outros modelos ou "chutam Alta sempre" (LogReg, ExtraTrees no teste) ou ficam perto do aleatório. O baseline parece bom em Acc (67%) mas tem BalAcc = 50% — confirma que é inútil.
+      </div>
+    </div>
+    <div class="chart-card" style="margin-top:0;">
+      <div class="chart-title">Peso de features — Top 15 coeficientes (LogReg) · Positivo = sinal de Alta · Negativo = sinal de Baixa</div>
+      <div id="chart-features" style="height:300px;"></div>
+      <div class="chart-note">
+        <strong>SMA de 50 dias domina:</strong> quando o preço está acima da média de 50 dias, o modelo tende a prever Alta. O histograma MACD reforça tendência de aceleração. Sinais negativos (macd_signal, close_sma_20) capturam contextos de fraqueza ou reversão. Feature importance serve para narrativa — não prova poder preditivo sozinho, precisa casar com as métricas.
+      </div>
+    </div>
+  </div>
+
+  <div class="ibox" style="margin-top:16px;">
+    <strong>HistGradientBoosting</strong> é um algoritmo que constrói uma sequência de pequenas "árvores de decisão", cada uma corrigindo os erros da anterior — como um time onde cada jogador aprende com os erros do colega. A versão "histo" usa histogramas para agrupar os dados, sendo mais eficiente em séries longas como a do IBOVESPA. Por treinar sequencialmente (não em paralelo como o Random Forest), ele se adapta melhor a padrões locais que aparecem no final da série de treino.
+  </div>
+</section>
+
+<!-- ══ 6. RESULTADO ══ -->
+<section id="resultado">
+  <div class="sec-title">6. Resultado — Os 30 Dias de Previsão Real</div>
+  <div class="sec-sub">Etapas 9–10 do notebook · Real vs Previsto · Matriz de confusão do HistGB</div>
+
+  <div class="why-label">Por que visualizar dia a dia?</div>
+  <p style="font-size:13.5px; color:var(--text2); line-height:1.7; margin-bottom:16px;">
+    Os números de acurácia resumem o desempenho, mas escondem padrões de erro. O gráfico "Real vs Previsto no tempo" mostra exatamente onde o modelo erra — e revela um problema clássico: modelos com acurácia aparentemente boa podem estar "viciados" em prever sempre a classe majoritária do período.
+  </p>
+
+  <div class="chart-card">
+    <div class="chart-title">Real vs Previsto — 30 pregões de teste (0 = Baixa, 1 = Alta) · LogReg ficou viciado em Alta · HistGB separou as classes</div>
+    <div id="chart-realvsprev" style="height:220px;"></div>
+    <div class="chart-note">
+      <strong>O LogReg (linha laranja tracejada) previu Alta em todos os 30 dias</strong> — por isso sua acurácia comum foi 66,7% (igualando o baseline) mas BalAcc = 50% (equivalente a cara ou coroa). O HistGB (linha verde) variou suas previsões, errando alguns dias mas acertando em ambos os lados. A linha azul (Real) mostra como o mercado realmente se comportou: 10 dias de Baixa entre os 30.
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="chart-card">
+      <div class="chart-title">Matriz de confusão — HistGB · 30 dias de teste</div>
+      <div id="chart-confusion" style="height:280px;"></div>
+      <div class="chart-note">
+        A matriz mostra os 4 tipos de resultado. <strong>TN=6</strong>: previu Baixa, era Baixa (✓). <strong>FP=4</strong>: previu Alta, era Baixa (✗ custoso se investidor). <strong>FN=8</strong>: previu Baixa, era Alta (✗ oportunidade perdida). <strong>TP=12</strong>: previu Alta, era Alta (✓). O modelo foi levemente conservador: previu "Baixa" em 14 dos 30 dias, enquanto apenas 10 foram realmente Baixa.
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Acertos vs Erros — HistGB · 30 dias · 18 acertos (60%)</div>
+      <div id="chart-testdays" style="height:280px;"></div>
+      <div class="chart-note">
+        Dos 10 dias reais de Baixa, o HistGB acertou 6 (60% de recall Baixa). Dos 20 dias reais de Alta, acertou 12 (60% de recall Alta). Esse equilíbrio perfeito de 60%/60% é o que define a Acurácia Balanceada = 60% — o modelo não favoreceu nenhuma classe.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ 7. CONCLUSÕES ══ -->
+<section id="conclusoes">
+  <div class="sec-title">7. Conclusões e Próximos Passos</div>
+  <div class="sec-sub">O que aprendemos, o que o modelo capturou e onde ainda há espaço para melhorar</div>
+
+  <div class="ibox i-green" style="margin-bottom:24px;">
+    <strong>Conclusão do projeto:</strong> o HistGradientBoosting é o melhor modelo porque equilibra acertos em Alta e Baixa (BalAcc = 60%) em vez de explorar a maioria do período de teste. Apesar de não atingir o critério de 75% do curso, o projeto demonstra rigor metodológico — separação cronológica, validação walk-forward, escolha de métrica correta — e deixa claro por que indicadores técnicos puros têm limite nesse problema.
+  </div>
+
+  <div class="strategy-grid">
+    <div class="strat-card t-amber">
+      <h4>Por que o mercado é difícil de prever com técnicos puros?</h4>
+      <p>A Hipótese do Mercado Eficiente (HME) diz que os preços já refletem toda a informação disponível — se existisse um padrão confiável de "amanhã sobe", traders agiriam hoje, eliminando o padrão. Os indicadores técnicos capturaram sinais fracos (SMA_50, MACD), mas em janelas curtas de 30 dias o ruído domina o sinal. A distribuição concentrada perto de 0% na EDA já previa essa dificuldade.</p>
+    </div>
+    <div class="strat-card t-green">
+      <h4>O que o modelo capturou de útil?</h4>
+      <p>A SMA de 50 dias (tendência estrutural) e o MACD (aceleração) foram os sinais mais consistentes — coerente com a teoria de que tendências de médio prazo têm alguma persistência. O HistGB, ao contrário do LogReg, conseguiu discriminar os dois lados mesmo em uma janela curta com 66,7% de Altas, sugerindo que aprendeu padrões reais, mesmo que fracos.</p>
+    </div>
+    <div class="strat-card t-blue">
+      <h4>Próximos passos para melhorar</h4>
+      <p>Para superar os 75% com BalAcc seria necessário: (1) adicionar dados macroeconômicos (Selic, câmbio, S&P 500, VIX), (2) incorporar sentimento de notícias via NLP, (3) aumentar a janela de teste para 90–180 dias para robustez estatística, (4) explorar modelos LSTM para dependências de longo prazo, (5) usar dados intraday para padrões de abertura de sessão.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer style="border-top:1px solid var(--border); padding:24px; text-align:center; font-size:12px; color:var(--text2);">
+  Leonardo Fernandes Sbardelotto · RM 368591 · POS TECH Data Analytics · Tech Challenge Fase 2 · IBOVESPA Jan 2020 – Jan 2026
+</footer>
+
+<script>
+const CFG = { responsive: true, displayModeBar: false };
+const BASE = {
+  paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+  font: { family: 'system-ui, sans-serif', color: '#8B949E', size: 11 },
+  margin: { t: 8, r: 16, b: 40, l: 52 },
+  xaxis: { gridcolor: '#21262D', linecolor: '#30363D', tickcolor: '#30363D' },
+  yaxis: { gridcolor: '#21262D', linecolor: '#30363D', tickcolor: '#30363D' }
+};
+
+// ── 1. IBOVESPA time series ──
+(function(){
+  const x=['Jan-2020','Mar-2020','Jun-2020','Sep-2020','Dec-2020','Mar-2021','Jun-2021','Sep-2021','Dec-2021','Mar-2022','Jun-2022','Sep-2022','Dec-2022','Mar-2023','Jun-2023','Sep-2023','Dec-2023','Mar-2024','Jun-2024','Sep-2024','Dec-2024','Mar-2025','Jun-2025','Sep-2025','Nov-2025','Jan-2026'];
+  const yt=[118.5,63.0,95.0,99.0,119.0,115.0,131.0,103.0,103.0,117.0,99.0,112.0,109.0,112.0,119.0,113.0,134.0,129.0,120.0,127.0,121.0,130.0,141.0,152.0,158.0,null];
+  const ye=[null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,158.0,162.0];
+  const layout=Object.assign({},BASE,{
+    margin:{t:8,r:16,b:44,l:56},
+    showlegend:true,
+    legend:{x:0.01,y:0.98,bgcolor:'rgba(0,0,0,0)',font:{size:11,color:'#8B949E'}},
+    yaxis:Object.assign({},BASE.yaxis,{title:{text:'IBOV (×1k pts)',font:{size:11}}}),
+    shapes:[{type:'line',x0:'Nov-2025',x1:'Nov-2025',y0:0,y1:1,yref:'paper',line:{color:'#D29922',width:1.5,dash:'dot'}}]
+  });
+  Plotly.newPlot('chart-ibov',[
+    {x,y:yt,mode:'lines',name:'Treino',line:{color:'#58A6FF',width:1.8},connectgaps:false},
+    {x,y:ye,mode:'lines+markers',name:'Teste',line:{color:'#D29922',width:2.5},marker:{size:6,color:'#D29922'},connectgaps:false}
+  ],layout,CFG);
+})();
+
+// ── 2. Daily returns histogram ──
+(function(){
+  const bins=[-0.135,-0.12,-0.105,-0.09,-0.075,-0.06,-0.045,-0.03,-0.015,0,0.015,0.03,0.045,0.06,0.075,0.09,0.105,0.12,0.135];
+  const freq=[2,3,6,11,23,47,82,143,213,248,222,162,102,56,26,11,5,2,1];
+  const layout=Object.assign({},BASE,{
+    margin:{t:8,r:16,b:44,l:52},
+    yaxis:Object.assign({},BASE.yaxis,{title:{text:'Frequência',font:{size:11}}}),
+    xaxis:Object.assign({},BASE.xaxis,{
+      title:{text:'Retorno diário (fração)',font:{size:11}},
+      tickformat:'.0%'
+    }),
+    shapes:[{type:'line',x0:0,x1:0,y0:0,y1:260,line:{color:'#F85149',width:1,dash:'dash'}}]
+  });
+  Plotly.newPlot('chart-retornos',[{
+    type:'bar', x:bins, y:freq,
+    marker:{color:'#D29922',opacity:0.85},
+    name:'Freq.'
+  }],layout,CFG);
+})();
+
+// ── 3. Class balance ──
+(function(){
+  const layout=Object.assign({},BASE,{
+    margin:{t:8,r:16,b:44,l:52},
+    showlegend:false,
+    yaxis:Object.assign({},BASE.yaxis,{title:{text:'Nº de dias',font:{size:11}},range:[0,850]}),
+    xaxis:Object.assign({},BASE.xaxis,{gridcolor:'rgba(0,0,0,0)'})
+  });
+  Plotly.newPlot('chart-balance',[{
+    type:'bar',
+    x:['Baixa (0) — 47,9%','Alta (1) — 52,1%'],
+    y:[695,755],
+    marker:{color:['#F85149','#3FB950'],opacity:0.85},
+    text:['695 dias','755 dias'],
+    textposition:'outside',
+    textfont:{color:'#E6EDF3',size:13}
+  }],layout,CFG);
+})();
+
+// ── 4. Acc vs BalAcc ──
+(function(){
+  const models=['Baseline\n(Alta sempre)','Random\nForest','Log.\nRegressão','Extra\nTrees','HistGradient\nBoosting'];
+  const acc=[0.667,0.433,0.433,0.433,0.600];
+  const balacc=[0.500,0.500,0.525,0.525,0.600];
+  const layout=Object.assign({},BASE,{
+    margin:{t:8,r:24,b:60,l:120},
+    barmode:'group',
+    showlegend:true,
+    legend:{x:0.98,y:0.02,xanchor:'right',yanchor:'bottom',bgcolor:'rgba(22,27,34,0.9)',font:{size:11,color:'#8B949E'}},
+    xaxis:Object.assign({},BASE.xaxis,{range:[0,0.85],title:{text:'Score',font:{size:11}}}),
+    yaxis:Object.assign({},BASE.yaxis,{gridcolor:'rgba(0,0,0,0)'}),
+    shapes:[
+      {type:'line',x0:0.75,x1:0.75,y0:-0.5,y1:4.5,line:{color:'#3FB950',width:1,dash:'dot'}},
+      {type:'line',x0:0.50,x1:0.50,y0:-0.5,y1:4.5,line:{color:'#F85149',width:1,dash:'dot'}}
+    ],
+    annotations:[
+      {x:0.75,y:4.5,text:'Critério FIAP 75%',showarrow:false,font:{color:'#3FB950',size:10},xanchor:'left',yanchor:'bottom',xshift:4},
+      {x:0.50,y:4.5,text:'Linha do acaso 50%',showarrow:false,font:{color:'#F85149',size:10},xanchor:'left',yanchor:'bottom',xshift:4}
+    ]
+  });
+  Plotly.newPlot('chart-accbalacc',[
+    {type:'bar',orientation:'h',name:'Accuracy',y:models,x:acc,
+     marker:{color:'#D29922',opacity:0.85},
+     text:acc.map(v=>(v*100).toFixed(1)+'%'),textposition:'outside',textfont:{color:'#E6EDF3',size:10},cliponaxis:false},
+    {type:'bar',orientation:'h',name:'Balanced Accuracy',y:models,x:balacc,
+     marker:{color:'#58A6FF',opacity:0.85},
+     text:balacc.map(v=>(v*100).toFixed(1)+'%'),textposition:'outside',textfont:{color:'#E6EDF3',size:10},cliponaxis:false}
+  ],layout,CFG);
+})();
+
+// ── 5. Feature coefficients ──
+(function(){
+  const feats=['close_sma_50','macd_hist','macd_signal','close_sma_20','macd','candle_range','vol_50','ret_lag4','gap_open','ret_lag5','vol_log','ret_lag6','ret_lag3','candle_body','ret_1d'];
+  const coefs=[0.65,0.53,-0.38,-0.33,-0.29,0.24,0.21,0.19,0.17,0.15,0.13,0.12,0.09,0.07,0.05];
+  const colors=coefs.map(v=>v>0?'#3FB950':'#F85149');
+  const layout=Object.assign({},BASE,{
+    margin:{t:8,r:24,b:40,l:110},
+    xaxis:Object.assign({},BASE.xaxis,{title:{text:'Coeficiente (LogReg)',font:{size:11}}}),
+    yaxis:Object.assign({},BASE.yaxis,{gridcolor:'rgba(0,0,0,0)'}),
+    shapes:[{type:'line',x0:0,x1:0,y0:-0.5,y1:14.5,line:{color:'#30363D',width:1}}],
+    annotations:[
+      {x:0.67,y:14,text:'Média móvel 50d',showarrow:true,arrowhead:2,arrowsize:0.8,arrowcolor:'#8B949E',font:{color:'#8B949E',size:10},xanchor:'left'},
+      {x:0.55,y:13,text:'Aceleração tendência',showarrow:true,arrowhead:2,arrowsize:0.8,arrowcolor:'#8B949E',font:{color:'#8B949E',size:10},xanchor:'left'}
+    ]
+  });
+  Plotly.newPlot('chart-features',[{
+    type:'bar',orientation:'h',
+    x:coefs,y:feats,
+    marker:{color:colors,opacity:0.85},
+    text:coefs.map(v=>v.toFixed(2)),textposition:'outside',
+    textfont:{color:'#E6EDF3',size:10},cliponaxis:false
+  }],layout,CFG);
+})();
+
+// ── 6. Real vs Previsto (LogReg all-Alta vs HistGB) ──
+(function(){
+  const dias=Array.from({length:30},(_,i)=>i+1);
+  const real=[1,1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,1,0,1,1,0,1,1,0,1];
+  const prevLR=Array(30).fill(1);
+  const prevHGB=[1,1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,0,0,1,1,1,0,0,1,0,0,1,1,0,1];
+  const layout=Object.assign({},BASE,{
+    margin:{t:8,r:16,b:44,l:52},
+    showlegend:true,
+    legend:{x:0.5,y:1.05,orientation:'h',xanchor:'center',bgcolor:'rgba(0,0,0,0)',font:{size:11,color:'#8B949E'}},
+    yaxis:Object.assign({},BASE.yaxis,{
+      tickvals:[0,1],ticktext:['0 = Baixa','1 = Alta'],range:[-0.2,1.4]
+    }),
+    xaxis:Object.assign({},BASE.xaxis,{title:{text:'Dia de teste',font:{size:11}}})
+  });
+  Plotly.newPlot('chart-realvsprev',[
+    {x:dias,y:real,mode:'lines+markers',name:'Real',
+     line:{color:'#58A6FF',width:2},marker:{size:5,color:'#58A6FF'}},
+    {x:dias,y:prevLR,mode:'lines',name:'LogReg (viciado em Alta)',
+     line:{color:'#F85149',width:2,dash:'dot'},opacity:0.7},
+    {x:dias,y:prevHGB,mode:'lines+markers',name:'HistGB (melhor)',
+     line:{color:'#3FB950',width:2},marker:{size:5,color:'#3FB950',symbol:'square'}}
+  ],layout,CFG);
+})();
+
+// ── 7. Confusion matrix ──
+(function(){
+  const z=[[6,4],[8,12]];
+  const xL=['Previsto: Baixa','Previsto: Alta'];
+  const yL=['Real: Baixa','Real: Alta'];
+  const ann=[];
+  for(let i=0;i<2;i++) for(let j=0;j<2;j++)
+    ann.push({x:xL[j],y:yL[i],text:'<b>'+z[i][j]+'</b>',showarrow:false,
+      font:{color:z[i][j]>8?'#0D1117':'#E6EDF3',size:22}});
+  const layout=Object.assign({},BASE,{
+    margin:{t:8,r:16,b:80,l:90},annotations:ann,
+    xaxis:Object.assign({},BASE.xaxis,{gridcolor:'rgba(0,0,0,0)',title:{text:'Previsão do Modelo',font:{size:11}}}),
+    yaxis:Object.assign({},BASE.yaxis,{gridcolor:'rgba(0,0,0,0)',title:{text:'Valor Real',font:{size:11}}})
+  });
+  Plotly.newPlot('chart-confusion',[{
+    type:'heatmap',z,x:xL,y:yL,
+    colorscale:[[0,'#21262D'],[1,'#58A6FF']],
+    showscale:false,zmin:0,zmax:12
+  }],layout,CFG);
+})();
+
+// ── 8. Acertos vs Erros ──
+(function(){
+  const layout=Object.assign({},BASE,{
+    margin:{t:8,r:16,b:60,l:54},
+    showlegend:true,
+    legend:{x:0.5,y:1.05,orientation:'h',xanchor:'center',bgcolor:'rgba(0,0,0,0)',font:{size:11,color:'#8B949E'}},
+    barmode:'group',
+    yaxis:Object.assign({},BASE.yaxis,{title:{text:'Número de dias',font:{size:11}},range:[0,24]}),
+    xaxis:Object.assign({},BASE.xaxis,{gridcolor:'rgba(0,0,0,0)'})
+  });
+  Plotly.newPlot('chart-testdays',[
+    {type:'bar',name:'Acertos',x:['Total (30d)','Real Alta (20d)','Real Baixa (10d)'],y:[18,12,6],
+     marker:{color:'#3FB950'},text:['18','12','6'],textposition:'outside',textfont:{color:'#E6EDF3',size:13}},
+    {type:'bar',name:'Erros',x:['Total (30d)','Real Alta (20d)','Real Baixa (10d)'],y:[12,8,4],
+     marker:{color:'#F85149'},text:['12','8','4'],textposition:'outside',textfont:{color:'#E6EDF3',size:13}}
+  ],layout,CFG);
+})();
+
+// ── Nav active on scroll ──
+(function(){
+  const secs=document.querySelectorAll('section[id]');
+  const lks=document.querySelectorAll('nav a');
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        lks.forEach(l=>l.classList.remove('active'));
+        const a=document.querySelector('nav a[href="#'+e.target.id+'"]');
+        if(a) a.classList.add('active');
+      }
+    });
+  },{rootMargin:'-30% 0px -60% 0px'});
+  secs.forEach(s=>obs.observe(s));
+})();
+</script>
+</body>
+</html>
