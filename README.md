@@ -1,10 +1,23 @@
 # POS TECH — Data Analytics · Tech Challenges
 
-**Autor:** Leonardo Fernandes Sbardelotto  
+**Autor:** Leonardo Fernandes Sbardelotto · RM 368591  
 **Curso:** Pós-Graduação em Data Analytics — FIAP / POS TECH  
 **Período:** 2024 – 2025
 
 Repositório com as entregas dos quatro Tech Challenges do curso de pós-graduação em Data Analytics. Cada fase cobriu um tema distinto, acumulando as disciplinas da etapa e exigindo uma entrega prática completa.
+
+---
+
+## 🔗 Relatórios Interativos
+
+> Clique nos links abaixo para abrir os relatórios diretamente no navegador — sem baixar nenhum arquivo.
+
+| Fase | Tema | Abrir relatório |
+|------|------|----------------|
+| Fase 1 | Exportações de vinho brasileiro | [📊 Ver relatório](https://sbardelottoo.github.io/postech-data-analytics/Fase-1/Entrega/relatorio_vinhos_fase1.html) |
+| Fase 2 | Previsão do IBOVESPA | [📊 Ver relatório](https://sbardelottoo.github.io/postech-data-analytics/Fase-2/Entrega/relatorio_ibovespa_fase2.html) |
+| Fase 3 | Análise PNAD COVID-19 | [📊 Ver relatório](https://sbardelottoo.github.io/postech-data-analytics/Fase-3/Entrega/relatorio_pnad_covid19.html) |
+| Fase 4 | Sistema preditivo de obesidade | [📊 Ver dashboard](https://sbardelottoo.github.io/postech-data-analytics/Fase-4/Entrega/streamlit-obsesity/dashboard_obesidade.html) · [🚀 App Streamlit](https://app-obsesity-iq.streamlit.app/) |
 
 ---
 
@@ -13,7 +26,7 @@ Repositório com as entregas dos quatro Tech Challenges do curso de pós-gradua�
 | Fase | Tema | Ferramentas Principais | Resultado |
 |------|------|------------------------|-----------|
 | [Fase 1](#fase-1--análise-de-exportações-de-vinho-brasileiro) | Exportações de vinho brasileiro | Python · Pandas · Plotly | Análise exploratória + gráficos para investidores |
-| [Fase 2](#fase-2--modelo-preditivo-ibovespa) | Previsão do IBOVESPA | Python · Scikit-learn · Google Colab | Classificador de tendência com acurácia >75% |
+| [Fase 2](#fase-2--modelo-preditivo-ibovespa) | Previsão do IBOVESPA | Python · Scikit-learn · Google Colab | Classificador de tendência com Balanced Accuracy 60% |
 | [Fase 3](#fase-3--análise-pnad-covid-19) | Comportamento da população na pandemia | SQL · BigQuery · Python | Relatório analítico interativo em HTML |
 | [Fase 4](#fase-4--sistema-preditivo-de-obesidade) | Predição de nível de obesidade | XGBoost · Streamlit · Plotly | App preditivo deployado + dashboard analítico |
 
@@ -31,7 +44,6 @@ Repositório com as entregas dos quatro Tech Challenges do curso de pós-gradua�
 - **Importações:** Chile, Argentina e Portugal consolidados como base (~78% do volume), com papel complementar de europeus premium (França US$ 5,52/L)
 - **Comercialização interna:** 6,15 bi litros no período; Vinho de Mesa + Tinto dominam (62%); suco integral com aceleração estrutural pós-2018
 - **Projeções:** tendências por série usando OLS e Holt-Winters para os próximos 5 anos
-- Análise produzida em **manuscrito PDF** + **Power BI** + **Google Colab** (notebook Python/Pandas)
 - Entrega reformulada como **relatório HTML interativo** com 11 gráficos Plotly (dark theme)
 
 **Números-chave:**
@@ -46,16 +58,15 @@ Repositório com as entregas dos quatro Tech Challenges do curso de pós-gradua�
 
 **Estrutura da entrega:**
 ```
-Fase 1/
+Fase-1/
 ├── Entrega/
-│   ├── relatorio_vinhos_fase1.html                    # Relatório interativo HTML (principal)
-│   └── Leonardo Fernandes Sbardelotto rm368591.pdf   # Relatório original PDF (21 págs.)
-└── Tech Challenge Fase 1/
-    ├── POSTECH - Tech Challenge - Fase 1.pdf          # Enunciado
-    └── Base de dados.zip                               # Dados brutos Embrapa
+│   └── relatorio_vinhos_fase1.html        # Relatório interativo HTML
+└── Tech-Challenge-Fase-1/
+    ├── POSTECH - Tech Challenge - Fase 1.pdf
+    └── Base de dados.zip
 ```
 
-**Como visualizar:** Abra `Fase 1/Entrega/relatorio_vinhos_fase1.html` diretamente no navegador — sem dependências, sem servidor.
+**→ [Abrir relatório](https://sbardelottoo.github.io/postech-data-analytics/Fase-1/Entrega/relatorio_vinhos_fase1.html)**
 
 ---
 
@@ -64,34 +75,34 @@ Fase 1/
 **Contexto:** Integrado a uma equipe de cientistas de dados de um fundo de investimentos, o desafio foi criar um modelo de Machine Learning capaz de prever se o índice IBOVESPA fecharia em **alta ou baixa** no dia seguinte.
 
 **O que foi feito:**
-- Coleta de dados históricos diários do IBOVESPA (mínimo 2 anos)
-- Feature engineering: variações percentuais, médias móveis, features lagged
-- Treinamento e avaliação de modelo de classificação binária
-- Resultado: acurácia superior a 75% no conjunto de teste (últimos 30 dias)
-- Apresentação em PDF com storytelling técnico + vídeo de 5 minutos com visão gerencial
+- Coleta de dados históricos diários do IBOVESPA (2020–2026) — 1.449 pregões
+- Feature engineering: 32 indicadores técnicos (médias móveis, MACD, RSI, volatilidade)
+- Split temporal: treino nos primeiros 1.419 dias, teste nos últimos 30 pregões
+- Avaliação por **Balanced Accuracy** (métrica correta para classe desbalanceada)
+- Único modelo que separou as duas classes: HistGradientBoosting com BalAcc = 60%
 
 **Resultados Reais do Modelo:**
 
-| Modelo | Acurácia Teste | Cross-Val (5-fold) |
-|--------|:--------------:|:------------------:|
-| Logistic Regression | 43,3% | 51,3% |
-| Random Forest | 43,3% | 51,7% |
-| Extra Trees | 43,3% | 52,1% |
-| **HistGradientBoosting (Final)** | **60,0%** | 50,3% |
+| Modelo | Acurácia Teste | Balanced Accuracy |
+|--------|:--------------:|:-----------------:|
+| Logistic Regression | 66,7% | 50,0% |
+| Random Forest | 66,7% | 50,0% |
+| Extra Trees | 66,7% | 50,0% |
+| **HistGradientBoosting (Final)** | **60,0%** | **60,0%** |
+| Baseline (sempre Alta) | 66,7% | 50,0% |
 
-> **Nota:** Baseline ingênuo (sempre prever "Alta") = 66,7%. Prever tendência de mercado é intrinsecamente difícil — o modelo captura padrões reais, mas dados macro/sentimento seriam necessários para superar o critério de 75%.
+> **Nota:** Accuracy sozinha engana — o baseline de sempre prever "Alta" atinge 66,7%. O HistGB é o único modelo que realmente aprende a separar as duas classes (BalAcc 60% vs 50% dos demais).
 
 **Estrutura da entrega:**
 ```
-Fase 2/
+Fase-2/
 └── Entrega/
     └── TechChallenge_IBOV_Colab_Leonardo_Sbardelotto/
-        ├── relatorio_ibovespa_fase2.html                          # Relatório interativo HTML (principal)
-        ├── TechChallenge_IBOV_Colab_Leonardo_Sbardelotto.ipynb   # Notebook principal
-        └── Machine Learning Fase 2 - Leonardo Sbardelotto.pdf    # Apresentação storytelling
+        ├── relatorio_ibovespa_fase2.html                        # Relatório interativo HTML
+        └── TechChallenge_IBOV_Colab_Leonardo_Sbardelotto.ipynb  # Notebook
 ```
 
-**Como visualizar:** Abra `Fase 2/Entrega/TechChallenge_IBOV_Colab_Leonardo_Sbardelotto/relatorio_ibovespa_fase2.html` diretamente no navegador.
+**→ [Abrir relatório](https://sbardelottoo.github.io/postech-data-analytics/Fase-2/Entrega/relatorio_ibovespa_fase2.html)**
 
 ---
 
@@ -100,18 +111,20 @@ Fase 2/
 **Contexto:** Contratado como Expert em Data Analytics por um grande hospital, o objetivo foi entender o comportamento da população durante a pandemia de COVID-19 usando os dados do PNAD-COVID-19 do IBGE, para subsidiar o planejamento hospitalar em caso de novo surto.
 
 **O que foi feito:**
-- Seleção de 20 variáveis-chave da pesquisa PNAD-COVID-19
-- Organização da base em banco de dados em nuvem (BigQuery)
+- Seleção de 20 variáveis-chave da pesquisa PNAD-COVID-19 (set–nov 2020)
+- Organização da base em banco de dados em nuvem (Google BigQuery)
 - Análise de 3 dimensões: sintomas clínicos · comportamento da população · características econômicas
+- ~1,15 milhão de respondentes ponderados · 810 grupos analíticos
 - Identificação de indicadores-chave para planejamento hospitalar
-- Entrega como relatório analítico interativo em HTML
 
 **Estrutura da entrega:**
 ```
-Fase 3/
+Fase-3/
 └── Entrega/
-    └── relatorio_pnad_covid19.html   # Relatório analítico interativo
+    └── relatorio_pnad_covid19.html    # Relatório analítico interativo
 ```
+
+**→ [Abrir relatório](https://sbardelottoo.github.io/postech-data-analytics/Fase-3/Entrega/relatorio_pnad_covid19.html)**
 
 ---
 
@@ -123,8 +136,8 @@ Fase 3/
 - Pipeline completo de ML: limpeza → feature engineering → treinamento → avaliação
 - Feature derivada **BMI (IMC)** criada a partir de Peso e Altura — principal preditor (51,8% de importância)
 - Comparação de 3 modelos: Logistic Regression · Random Forest · **XGBoost (selecionado)**
-- Acurácia final: **98,1%** no conjunto de teste (critério: >75%)
-- Aplicação preditiva interativa deployada no Streamlit
+- Acurácia final: **98,1%** no conjunto de teste · cross-val 5-fold: **98,6%**
+- Aplicação preditiva interativa deployada no Streamlit Cloud
 - Dashboard analítico HTML com insights para a equipe médica
 
 **Resultados do Modelo:**
@@ -143,27 +156,29 @@ Fase 3/
 
 **Estrutura da entrega:**
 ```
-Fase 4/
+Fase-4/
 └── Entrega/
-    └── streamlit obsesity/
-        ├── relatorio_obesidade_fase4.html   # Relatório analítico interativo (principal)
-        ├── dashboard_obesidade.html          # Painel analítico (versão anterior)
-        ├── pipeline_ml.py                    # Pipeline completo de ML
-        ├── app_streamlit.py                  # Aplicação preditiva (Streamlit)
-        ├── clinical_helpers.py               # Helpers clínicos (CPF, plano clínico)
-        ├── model_xgb.pkl                     # Modelo treinado
-        ├── model_meta.json                   # Metadados do modelo
-        ├── Dados Obesity.csv                 # Dataset
-        └── requirements.txt                  # Dependências
+    ├── index.html                          # Página hub com todos os links da Fase 4
+    └── streamlit-obsesity/
+        ├── dashboard_obesidade.html        # Dashboard analítico interativo
+        ├── app_streamlit.py                # Aplicação preditiva (Streamlit)
+        ├── pipeline_ml.py                  # Pipeline completo de ML
+        ├── clinical_helpers.py             # Helpers clínicos
+        ├── model_xgb.pkl                   # Modelo treinado
+        ├── Dados Obesity.csv               # Dataset (2.111 registros)
+        └── requirements.txt
 ```
 
-**Como visualizar:** Abra `Fase 4/Entrega/streamlit obsesity/relatorio_obesidade_fase4.html` diretamente no navegador.
+**→ [Página da Fase 4](https://sbardelottoo.github.io/postech-data-analytics/Fase-4/Entrega/index.html)**  
+**→ [Dashboard analítico](https://sbardelottoo.github.io/postech-data-analytics/Fase-4/Entrega/streamlit-obsesity/dashboard_obesidade.html)**  
+**→ [App Streamlit (ao vivo)](https://app-obsesity-iq.streamlit.app/)**  
+**→ [Código-fonte no GitHub](https://github.com/Sbardelottoo/streamlit-obsesity)**
 
-**Como executar:**
+**Como executar localmente:**
 ```bash
+cd Fase-4/Entrega/streamlit-obsesity
 pip install -r requirements.txt
-python pipeline_ml.py          # Treina o modelo e gera model_xgb.pkl
-streamlit run app_streamlit.py # Sobe a aplicação preditiva
+streamlit run app_streamlit.py
 ```
 
 ---
@@ -175,7 +190,7 @@ streamlit run app_streamlit.py # Sobe a aplicação preditiva
 | Linguagem | Python 3.x |
 | Análise de dados | Pandas · NumPy |
 | Machine Learning | Scikit-learn · XGBoost |
-| Visualização | Plotly · Matplotlib · Seaborn |
+| Visualização | Plotly · Chart.js · Matplotlib |
 | Aplicação web | Streamlit |
 | Banco de dados | BigQuery (Google Cloud) |
 | Notebooks | Google Colab · Jupyter |
